@@ -26,6 +26,12 @@ struct AddressData {
 }
 
 struct AppStorage {
+  // address of the diamond saw contract
+  address diamondSawAddress;
+
+  // mapping to all the facets this diamond implements
+  mapping(address => bool) facetAddresses;
+
   // The tokenId of the next token to be minted.
   uint256  _currentIndex;
 
