@@ -50,4 +50,13 @@ struct AppStorage {
 
   // Mapping from owner to operator approvals
   mapping(address => mapping(address => bool)) _operatorApprovals;
+
+  // The current sale state
+  uint256 saleState;
+
+  // public mint price
+  uint256 publicMintPrice;
 }
+
+uint256 constant SALE_STATE_CLOSED = 0;
+uint256 constant SALE_STATE_PUBLIC = 1;

@@ -45,7 +45,12 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, Initializabl
 
     AppStorage internal s;
 
-    function initialize(string memory name_, string memory symbol_) public initializer {
+    modifier atSaleState(uint256 _saleState) {
+        require(s.saleState == _saleState, "Cannot call function, not in correct sale state");
+        _;
+    }
+
+    function initializeERC721AFacet(string memory name_, string memory symbol_) public initializer {
       LibDiamond.enforceIsContractOwner();
       s._name = name_;
       s._symbol = symbol_;
@@ -581,4 +586,19 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, Initializabl
         uint256 startTokenId,
         uint256 quantity
     ) internal virtual {}
+
+    function setSaleState(uint256 saleState_) public {
+        LibDiamond.enforceIsContractOwner();
+        s.saleState = saleState_;
+    }
+
+    function devMint(uint256 quantity) public payable {
+        LibDiamond.enforceIsContractOwner();
+        _safeMint(msg.sender, quantity);
+    }
+
+    function publicMint(uint256 quantity) public payable atSaleState(SALE_STATE_PUBLIC) {
+        require(msg.value >= quantity * s.publicMintPrice, "Insufficient funds to mint");
+        _safeMint(msg.sender, quantity);
+    }
 }

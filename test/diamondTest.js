@@ -9,7 +9,8 @@ const {
 
 const { deployDiamond } = require('../scripts/deploy.js')
 
-const { assert } = require('chai')
+const { assert, expect } = require('chai')
+const { ethers } = require('hardhat')
 
 describe('DiamondTest', async function () {
   let diamondAddress
@@ -245,5 +246,44 @@ describe('DiamondTest', async function () {
     assert.sameMembers(facets[findAddressPositionInFacets(addresses[2], facets)][1], getSelectors(ownershipFacet))
     assert.sameMembers(facets[findAddressPositionInFacets(addresses[3], facets)][1], getSelectors(Test1Facet))
     assert.sameMembers(facets[findAddressPositionInFacets(addresses[4], facets)][1], getSelectors(Test2Facet))
+  })
+
+  it('should add erc721A functions', async () => {
+    const ERC721AFacet = await ethers.getContractFactory('ERC721AFacet')
+    const erc721AFacet = await ERC721AFacet.deploy()
+    await erc721AFacet.deployed()
+    addresses.push(erc721AFacet.address)
+
+    const selectors = getSelectors(erc721AFacet).remove(['supportsInterface(bytes4)'])
+
+    tx = await diamondCutFacet.diamondCut(
+      [{
+        facetAddress: erc721AFacet.address,
+        action: FacetCutAction.Add,
+        functionSelectors: selectors
+      }],
+      ethers.constants.AddressZero, 
+      '0x', 
+      { gasLimit: 800000 }
+    )
+    receipt = await tx.wait()
+    console.log("RECEIPT STATUS: ", receipt);
+    if (!receipt.status) {
+      throw Error(`Diamond upgrade failed: ${tx.hash}`)
+    }
+    result = await diamondLoupeFacet.facetFunctionSelectors(erc721AFacet.address)
+    assert.sameMembers(result, selectors)
+
+    const erc721Instance = await ethers.getContractAt('ERC721AFacet', diamondAddress);
+
+    // try minting!
+    await erc721Instance.initializeERC721AFacet('hello diamond', 'WORLD');
+
+    await erc721Instance.devMint(3);
+
+    const nftOwner = await erc721Instance.ownerOf(1);
+    const accounts = await ethers.getSigners()
+    const contractOwner = accounts[0]
+    expect(nftOwner).to.equal(contractOwner.address);
   })
 })
