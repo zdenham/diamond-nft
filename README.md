@@ -6,7 +6,7 @@ The idea behind this pattern is to use one Singleton contract (the saw) to facil
 
 By doing so we take the most gas costly part of diamond cutting (storing / managing all the selector mappings) and bring it under the responsibility of one contract that can be reused accross many diamond clones.
 
-The diamond now only needs to store a map of addresses to its faucet implementations.
+The diamond now only needs to store a map of addresses to its faucet implementations, the saw handles the rest.
 
 ## Motivation
 
@@ -38,4 +38,5 @@ In this example, we deploy an ERC721A single cut Diamond for <400,000 gas, which
 - Diamond cut event
 - Make ERC721AFaucet Initializable
 - Whatever else is left to fully comply to the diamond standard
-- Add a "gas cache" where we store SOME selector mappings locally on the diamond (for highly trafficked write calls)'
+- Add a "gas cache" where we store SOME selector mappings locally on the diamond (for highly trafficked write calls)
+- More tests
