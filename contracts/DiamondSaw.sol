@@ -7,8 +7,6 @@ import { IDiamondCut } from "./interfaces/IDiamondCut.sol";
 
 import { LibDiamond } from "./libraries/LibDiamond.sol";
 
-import "hardhat/console.sol";
-
 /**
  * DiamondSaw is meant to be used as a
  * Singleton to "cut" many minimal diamond clones
