@@ -7,6 +7,8 @@ import { IDiamondCut } from "./interfaces/IDiamondCut.sol";
 
 import { LibDiamond } from "./libraries/LibDiamond.sol";
 
+import "hardhat/console.sol";
+
 /**
  * DiamondSaw is meant to be used as a
  * Singleton to "cut" many minimal diamond clones
@@ -26,7 +28,7 @@ import { LibDiamond } from "./libraries/LibDiamond.sol";
  * to communicate with the singleton (saw) to fetch selectors
  * 
  */
-contract DiamondSaw is Ownable {
+contract DiamondSaw {
   // TODO - VERY IMPORTANT
   // only ADD operations should be supported
   // and selectors should never be able to be overridden
@@ -36,8 +38,8 @@ contract DiamondSaw is Ownable {
     IDiamondCut.FacetCut[] memory _facetAdds,
     address _init,
     bytes memory _calldata
-  ) public onlyOwner {
-    LibDiamond.diamondCut(_facetAdds, _init, _calldata);   
+  ) public {
+    LibDiamond.diamondCut(_facetAdds, _init, _calldata);
   }
 
   // if a facet has no selectors, it is not supported

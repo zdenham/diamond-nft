@@ -39,7 +39,7 @@ error URIQueryForNonexistentToken();
  *
  * Assumes that the maximum token id cannot exceed 2**256 - 1 (max value of uint256).
  */
-contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, Initializable {
+contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata {
     using Address for address;
     using Strings for uint256;
 
@@ -50,8 +50,9 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, Initializabl
         _;
     }
 
-    function initializeERC721AFacet(string memory name_, string memory symbol_) public initializer {
-      LibDiamond.enforceIsContractOwner();
+    // TODO make this initializable
+    function initializeERC721AFacet(string memory name_, string memory symbol_) public {
+    //   LibDiamond.enforceIsContractOwner();
       s._name = name_;
       s._symbol = symbol_;
       s._currentIndex = _startTokenId();
@@ -593,7 +594,7 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, Initializabl
     }
 
     function devMint(uint256 quantity) public payable {
-        LibDiamond.enforceIsContractOwner();
+        // LibDiamond.enforceIsContractOwner();
         _safeMint(msg.sender, quantity);
     }
 

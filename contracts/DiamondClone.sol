@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import './facets/AppStorage.sol';
 
+import "hardhat/console.sol";
+
 // NOTE: this implementation is just
 // a quick example of a single cut
 // 
@@ -40,10 +42,9 @@ contract DiamondClone {
         require(success, "Failed to fetch facet address for call");
 
         assembly {
-            addr := mload(res)
+            addr := mload(add(res, 32))
         } 
     }
-    
 
     // Find facet for function that is called and execute the
     // function if a facet is found and return any value.
@@ -53,6 +54,8 @@ contract DiamondClone {
         // referencing the selector gas cache will be cheaper than
         // calling externally
         address facet = _getFacetAddressForCall();
+
+        console.log("THE FACET", facet);
 
         // check if the facet address exists on the saw AND is included in our local cut
         require(facet != address(0) && s.facetAddresses[facet], "Diamond: Function does not exist");

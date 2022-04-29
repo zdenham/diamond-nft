@@ -23,7 +23,13 @@ async function deployDiamond () {
   await diamondSaw.deployed();
 
   // add the ERC721A facet pattern to the SAW
-  diamondSaw.addFacetPattern()
+  const add = [{
+    facetAddress: erc721AFacet.address,
+    action: FacetCutAction.Add,
+    functionSelectors: getSelectors(erc721AFacet)
+  }];
+
+  await diamondSaw.addFacetPattern(add, ethers.constants.AddressZero, '0x');
 
   // deploy Diamond Clone
   const DiamondClone = await ethers.getContractFactory('DiamondClone');
