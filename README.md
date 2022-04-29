@@ -1,6 +1,4 @@
-# Diamond Saw + ERC721A Facet Example
-
-💎 🪚
+# 💎 🪚 Diamond Saw + ERC721A Facet Example
 
 This is a minimal proof of concept for Diamond SAW!
 
