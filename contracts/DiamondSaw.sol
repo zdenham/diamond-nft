@@ -20,27 +20,32 @@ import { LibDiamond } from "./libraries/LibDiamond.sol";
  * 1. Need cheap deployments of many similar cloned diamonds that
  * utilize the same pre-deployed facets
  * 
- * 2. Are okay with gas overhead on ANY write txn to the diamonds
+ * 2. Are okay with gas overhead on write txn to the diamonds
  * to communicate with the singleton (saw) to fetch selectors
+ * 
  */
 contract DiamondSaw is Ownable {
   constructor(){}
 
-  function addFacetForCloning(address _newFacetAddress) public onlyOwner {
-    // Add the diamondCut external function from the diamondCutFacet
-    IDiamondCut.FacetCut[] memory cut = new IDiamondCut.FacetCut[](1);
-    bytes4[] memory functionSelectors = new bytes4[](1);
-    functionSelectors[0] = IDiamondCut.diamondCut.selector;
-    cut[0] = IDiamondCut.FacetCut({
-        facetAddress: _newFacetAddress, 
-        action: IDiamondCut.FacetCutAction.Add, 
-        functionSelectors: functionSelectors
-    });
-    LibDiamond.diamondCut(cut, address(0), "");   
+  // TODO - VERY IMPORTANT
+  // only ADD operations should be supported
+  // and selectors should never be able to be overridden
+  // otherwise diamond clones will not be guarunteed to be immutable
+  // for now just do a normal library diamond cut
+  function addFacets(
+    IDiamondCut.FacetCut[] memory _facetAdds,
+    address _init,
+    bytes memory _calldata
+  ) public onlyOwner {
+    LibDiamond.diamondCut(_facetAdds, _init, _calldata);   
   }
 
   // if a facet has no selectors, it is not supported
-  function isFacetSupported(address _facetAddress) external view returns (bool) {
-    return LibDiamond.diamondStorage().facetFunctionSelectors[_facetAddress].functionSelectors.length > 0;
+  function isFacetSupported(address _facetAddress) external view {
+    require(LibDiamond.diamondStorage().facetFunctionSelectors[_facetAddress].functionSelectors.length > 0, 'Facet not supported');
+  }
+
+  function facetAddressForSelector(bytes4 selector) external view returns (address) {
+    return LibDiamond.diamondStorage().selectorToFacetAndPosition[selector].facetAddress;
   }
 }

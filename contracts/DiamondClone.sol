@@ -1,15 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/******************************************************************************\
-* Author: Nick Mudge <nick@perfectabstractions.com> (https://twitter.com/mudgen)
-* EIP-2535 Diamonds: https://eips.ethereum.org/EIPS/eip-2535
-*
-* Implementation of a diamond.
-/******************************************************************************/
-
-import { LibDiamond } from "./libraries/LibDiamond.sol";
-import { IDiamondCut } from "./interfaces/IDiamondCut.sol";
 import './facets/AppStorage.sol';
 
 contract DiamondClone {
@@ -20,29 +11,42 @@ contract DiamondClone {
 
         for(uint256 i; i < facetAddresses.length; i++) {
             address facetAddress = facetAddresses[i];
-            require(_isFacetSupported(facetAddress), "Facet not supported");
+            _checkFacetSupported(facetAddress);
             s.facetAddresses[facetAddress] = true;
         }
     }
 
-    function _isFacetSupported(address facetAddress) private pure returns(bool) {
-        s.diamondSawAddress.call(bytes4(keccak256("setA(uint256)")),facetAddress);
-        // return s.diamondSawAddress.call(bytes4(keccak256("isFacetSupported(address_facetAddress)")),facetAddress);
+    function _checkFacetSupported(address facetAddress) private {
+        (bool success,) = s.diamondSawAddress.call(
+            abi.encodeWithSignature("isFacetSupported(address)", facetAddress)
+        );
+        require(success, "Facet not supported");
+    }
+
+    function _getFacetAddressForCall() private returns (address addr) {
+        (bool success, bytes memory res) = s.diamondSawAddress.call(
+            abi.encodeWithSignature("facetAddressForSelector(bytes4)", msg.sig)
+        );
+        require(success, "Failed to fetch facet address for call");
+
+        assembly {
+            addr := mload(res)
+        } 
     }
     
 
     // Find facet for function that is called and execute the
     // function if a facet is found and return any value.
-    function fallback() external payable {
-        LibDiamond.DiamondStorage storage ds;
-        bytes32 position = LibDiamond.DIAMOND_STORAGE_POSITION;
-        // get diamond storage
-        assembly {
-            ds.slot := position
-        }
-        // get facet from function selector
-        address facet = ds.selectorToFacetAndPosition[msg.sig].facetAddress;
-        require(facet != address(0), "Diamond: Function does not exist");
+    fallback() external payable {
+        // TODO - implement a "gas cache" that keeps track of 
+        // highly trafficked write selector on the diamond itself
+        // referencing the selector gas cache will be cheaper than
+        // calling externally
+        address facet = _getFacetAddressForCall();
+
+        // check if the facet address exists on the saw AND is included in our local cut
+        require(facet != address(0) && s.facetAddresses[facet], "Diamond: Function does not exist");
+
         // Execute external function from facet using delegatecall and return any value.
         assembly {
             // copy function selector and any arguments
@@ -62,5 +66,5 @@ contract DiamondClone {
         }
     }
 
-    function receive() external payable {}
+    receive() external payable {}
 }
