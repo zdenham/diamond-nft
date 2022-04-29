@@ -29,7 +29,9 @@ struct AppStorage {
   // address of the diamond saw contract
   address diamondSawAddress;
 
-  // mapping to all the facets this diamond implements
+  // IMPORTANT!!! check this out
+  // mapping to all the facets this diamond implements.
+  // because of this we don't have to store selectors
   mapping(address => bool) facetAddresses;
 
   // The tokenId of the next token to be minted.

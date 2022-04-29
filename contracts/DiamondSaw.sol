@@ -14,6 +14,8 @@ import { LibDiamond } from "./libraries/LibDiamond.sol";
  * 
  * This is accomplished by handling the storage intensive 
  * selector mappings in one contract, "the saw" instead of in each diamond.
+ *
+ * Adding a new facet to the saw enables new diamond "patterns"
  * 
  * This should be used if you
  * 
@@ -25,14 +27,12 @@ import { LibDiamond } from "./libraries/LibDiamond.sol";
  * 
  */
 contract DiamondSaw is Ownable {
-  constructor(){}
-
   // TODO - VERY IMPORTANT
   // only ADD operations should be supported
   // and selectors should never be able to be overridden
   // otherwise diamond clones will not be guarunteed to be immutable
   // for now just do a normal library diamond cut
-  function addFacets(
+  function addFacetPattern(
     IDiamondCut.FacetCut[] memory _facetAdds,
     address _init,
     bytes memory _calldata

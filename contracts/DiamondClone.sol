@@ -3,6 +3,15 @@ pragma solidity ^0.8.0;
 
 import './facets/AppStorage.sol';
 
+// NOTE: this implementation is just
+// a quick example of a single cut
+// 
+// TODO: implement diamondCut, ownership & loupe
+// functionality (that reads from the saw) and
+// adjusts the local implementationFacet address map 
+// also need event emmissions to be fully 
+// compliant w/ the diamond standard
+
 contract DiamondClone {
     AppStorage internal s;
 
@@ -23,6 +32,7 @@ contract DiamondClone {
         require(success, "Facet not supported");
     }
 
+    // calls externally to the saw to find the appropriate facet to delegate to
     function _getFacetAddressForCall() private returns (address addr) {
         (bool success, bytes memory res) = s.diamondSawAddress.call(
             abi.encodeWithSignature("facetAddressForSelector(bytes4)", msg.sig)
