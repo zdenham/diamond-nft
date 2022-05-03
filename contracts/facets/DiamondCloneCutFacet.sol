@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
 /******************************************************************************/
 
 import {IDiamondCut} from "../interfaces/IDiamondCut.sol";
-import {LibDiamond} from "../libraries/LibDiamond.sol";
+import {LibDiamondSaw} from "../libraries/LibDiamondSaw.sol";
 
 // Remember to add the loupe functions from DiamondLoupeFacet to the diamond.
 // The loupe functions are required by the EIP2535 Diamonds standard
@@ -25,6 +25,6 @@ contract DiamondCutFacet is IDiamondCut {
         bytes calldata _calldata
     ) external override {
         // LibDiamond.enforceIsContractOwner();
-        LibDiamond.diamondCut(_diamondCut, _init, _calldata);
+        LibDiamondSaw.diamondCut(_diamondCut, _init, _calldata);
     }
 }

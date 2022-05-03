@@ -11,10 +11,8 @@ import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "./AppStorage.sol";
 import "./AccessControlFacet.sol";
-
-import {LibDiamond} from "../libraries/LibDiamond.sol";
+import "../utils/DiamondInitializable.sol";
 
 error ApprovalCallerNotOwnerNorApproved();
 error ApprovalQueryForNonexistentToken();
@@ -40,11 +38,9 @@ error URIQueryForNonexistentToken();
  *
  * Assumes that the maximum token id cannot exceed 2**256 - 1 (max value of uint256).
  */
-contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessControlFacet {
+contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessControlFacet, DiamondInitializable {
     using Address for address;
     using Strings for uint256;
-
-    AppStorage internal s;
 
     // Compiler will pack this into a single 256bit word.
     struct TokenOwnership {
@@ -90,6 +86,13 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
         mapping(address => mapping(address => bool)) _operatorApprovals;
         // public mint price
         uint256 publicMintPrice;
+    }
+
+    function init(string memory name_, string memory symbol_) external initializer("erc721A.initializer") {
+        LibAccessControl._transferOwnership(msg.sender);
+        erc721AStorage()._name = name_;
+        erc721AStorage()._symbol = symbol_;
+        erc721AStorage()._currentIndex = 1;
     }
 
     function erc721AStorage() internal pure returns (ERC721AStorage storage es) {

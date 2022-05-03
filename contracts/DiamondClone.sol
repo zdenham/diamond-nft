@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./facets/AppStorage.sol";
+import "./DiamondSaw.sol";
 
 // NOTE: this implementation is just
 // a quick example of a single cut
@@ -12,57 +12,83 @@ import "./facets/AppStorage.sol";
 // also need event emmissions to be fully
 // compliant w/ the diamond standard
 
-contract DiamondClone {
-    AppStorage internal s;
+bytes32 constant DIAMOND_CLONE_STORAGE_POSITION = keccak256("diamond.standard.diamond.clone.storage");
 
-    constructor(
-        string memory _name,
-        string memory _symbol,
-        address diamondSawAddress,
-        address[] memory facetAddresses
-    ) payable {
-        s.diamondSawAddress = diamondSawAddress;
+library LibDiamondClone {
+    // bytes32 constant DIAMOND_CLONE_STORAGE_POSITION = keccak256("diamond.standard.diamond.clone.storage");
 
-        for (uint256 i; i < facetAddresses.length; i++) {
-            s.facetAddresses[facetAddresses[i]] = true;
-        }
-
-        init(_name, _symbol);
+    struct DiamondCloneStorage {
+        // address of the diamond saw contract
+        address diamondSawAddress;
+        // mapping to all the facets this diamond implements.
+        mapping(address => bool) facetAddresses;
+        // gas cache (TODO)
+        mapping(bytes4 => address) selectorGasCache;
     }
 
-    // subset of ERC721 storage in same order
-    struct ERC721AStorage {
-        // The tokenId of the next token to be minted.
-        uint256 _currentIndex;
-        // The number of tokens burned.
-        uint256 _burnCounter;
-        // Token name
-        string _name;
-        // Token symbol
-        string _symbol;
-    }
-
-    function erc721AStorage() internal pure returns (ERC721AStorage storage es) {
-        bytes32 position = keccak256("erc721a.facet.storage");
+    function getDiamondCloneStorage() internal pure returns (DiamondCloneStorage storage s) {
+        bytes32 position = DIAMOND_CLONE_STORAGE_POSITION;
         assembly {
-            es.slot := position
+            s.slot := position
         }
     }
 
-    function init(string memory name_, string memory symbol_) internal {
-        // LibAccessControl._transferOwnership(msg.sender);
-        erc721AStorage()._name = name_;
-        erc721AStorage()._symbol = symbol_;
-        erc721AStorage()._currentIndex = 1;
+    function diamondCut(address _facetAddress, bytes memory _calldata) internal {
+        (bool success, bytes memory error) = _facetAddress.delegatecall(_calldata);
+        if (!success) {
+            if (error.length > 0) {
+                // bubble up the error
+                revert(string(error));
+            } else {
+                revert("LibDiamondCut: _init function reverted");
+            }
+        }
     }
 
     // calls externally to the saw to find the appropriate facet to delegate to
-    function _getFacetAddressForCall() private returns (address addr) {
-        (bool success, bytes memory res) = s.diamondSawAddress.call(abi.encodeWithSignature("facetAddressForSelector(bytes4)", msg.sig));
+    function _getFacetAddressForCall() internal returns (address addr) {
+        (bool success, bytes memory res) = getDiamondCloneStorage().diamondSawAddress.call(
+            abi.encodeWithSignature("facetAddressForSelector(bytes4)", msg.sig)
+        );
         require(success, "Failed to fetch facet address for call");
 
         assembly {
             addr := mload(add(res, 32))
+        }
+    }
+}
+
+contract DiamondClone {
+    event DiamondCut(IDiamondCut.FacetCut[] _diamondCut, address _init, bytes _calldata);
+
+    constructor(
+        address diamondSawAddress,
+        address[] memory facetAddresses,
+        address _init, // base facet address
+        bytes memory _calldata // appropriate call data
+    ) {
+        LibDiamondClone.getDiamondCloneStorage().diamondSawAddress = diamondSawAddress;
+
+        IDiamondCut.FacetCut[] memory cuts = new IDiamondCut.FacetCut[](facetAddresses.length);
+
+        // emit the diamond cut event
+        for (uint256 i; i < facetAddresses.length; i++) {
+            bytes4[] memory selectors = DiamondSaw(diamondSawAddress).functionSelectorsForFacetAddress(facetAddresses[i]);
+            cuts[i].facetAddress = facetAddresses[i];
+            cuts[i].functionSelectors = selectors;
+        }
+
+        emit DiamondCut(cuts, _init, _calldata);
+
+        // call the init function
+        (bool success, bytes memory error) = _init.delegatecall(_calldata);
+        if (!success) {
+            if (error.length > 0) {
+                // bubble up the error
+                revert(string(error));
+            } else {
+                revert("LibDiamondCut: _init function reverted");
+            }
         }
     }
 
@@ -73,10 +99,10 @@ contract DiamondClone {
         // highly trafficked write selector on the diamond itself
         // referencing the selector gas cache will be cheaper than
         // calling externally
-        address facet = _getFacetAddressForCall();
+        address facet = LibDiamondClone._getFacetAddressForCall();
 
         // check if the facet address exists on the saw AND is included in our local cut
-        require(facet != address(0) && s.facetAddresses[facet], "Diamond: Function does not exist");
+        require(facet != address(0) && LibDiamondClone.getDiamondCloneStorage().facetAddresses[facet], "Diamond: Function does not exist");
 
         // Execute external function from facet using delegatecall and return any value.
         assembly {

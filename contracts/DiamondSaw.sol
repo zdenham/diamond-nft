@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import {IDiamondCut} from "./interfaces/IDiamondCut.sol";
 
-import {LibDiamond} from "./libraries/LibDiamond.sol";
+import {LibDiamondSaw} from "./libraries/LibDiamondSaw.sol";
 
 /**
  * DiamondSaw is meant to be used as a
@@ -37,15 +37,19 @@ contract DiamondSaw {
         address _init,
         bytes memory _calldata
     ) public {
-        LibDiamond.diamondCut(_facetAdds, _init, _calldata);
+        LibDiamondSaw.diamondCut(_facetAdds, _init, _calldata);
     }
 
     // if a facet has no selectors, it is not supported
     function isFacetSupported(address _facetAddress) external view {
-        require(LibDiamond.diamondStorage().facetFunctionSelectors[_facetAddress].functionSelectors.length > 0, "Facet not supported");
+        require(LibDiamondSaw.diamondStorage().facetFunctionSelectors[_facetAddress].functionSelectors.length > 0, "Facet not supported");
     }
 
     function facetAddressForSelector(bytes4 selector) external view returns (address) {
-        return LibDiamond.diamondStorage().selectorToFacetAndPosition[selector].facetAddress;
+        return LibDiamondSaw.diamondStorage().selectorToFacetAndPosition[selector].facetAddress;
+    }
+
+    function functionSelectorsForFacetAddress(address facetAddress) external view returns (bytes4[] memory) {
+        return LibDiamondSaw.diamondStorage().facetFunctionSelectors[facetAddress].functionSelectors;
     }
 }
