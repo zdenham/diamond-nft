@@ -33,7 +33,7 @@ async function deployDiamond () {
 
   // deploy Diamond Clone
   const DiamondClone = await ethers.getContractFactory('DiamondClone');
-  const diamondClone = await DiamondClone.deploy(diamondSaw.address, [erc721AFacet.address]);
+  const diamondClone = await DiamondClone.deploy("Blah", "Blah", diamondSaw.address, [erc721AFacet.address]);
   await diamondClone.deployed();
 
   console.log('Diamond deployed:', diamondClone.address);

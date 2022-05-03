@@ -15,19 +15,45 @@ import "./facets/AppStorage.sol";
 contract DiamondClone {
     AppStorage internal s;
 
-    constructor(address diamondSawAddress, address[] memory facetAddresses) payable {
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        address diamondSawAddress,
+        address[] memory facetAddresses
+    ) payable {
         s.diamondSawAddress = diamondSawAddress;
 
         for (uint256 i; i < facetAddresses.length; i++) {
-            address facetAddress = facetAddresses[i];
-            _checkFacetSupported(facetAddress);
-            s.facetAddresses[facetAddress] = true;
+            s.facetAddresses[facetAddresses[i]] = true;
+        }
+
+        init(_name, _symbol);
+    }
+
+    // subset of ERC721 storage in same order
+    struct ERC721AStorage {
+        // The tokenId of the next token to be minted.
+        uint256 _currentIndex;
+        // The number of tokens burned.
+        uint256 _burnCounter;
+        // Token name
+        string _name;
+        // Token symbol
+        string _symbol;
+    }
+
+    function erc721AStorage() internal pure returns (ERC721AStorage storage es) {
+        bytes32 position = keccak256("erc721a.facet.storage");
+        assembly {
+            es.slot := position
         }
     }
 
-    function _checkFacetSupported(address facetAddress) private {
-        (bool success, ) = s.diamondSawAddress.call(abi.encodeWithSignature("isFacetSupported(address)", facetAddress));
-        require(success, "Facet not supported");
+    function init(string memory name_, string memory symbol_) internal {
+        // LibAccessControl._transferOwnership(msg.sender);
+        erc721AStorage()._name = name_;
+        erc721AStorage()._symbol = symbol_;
+        erc721AStorage()._currentIndex = 1;
     }
 
     // calls externally to the saw to find the appropriate facet to delegate to
