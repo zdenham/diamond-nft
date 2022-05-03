@@ -102,10 +102,10 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
         }
     }
 
-    modifier atSaleState(uint256 _saleState) {
-        require(s.saleState == _saleState, "Cannot call function, not in correct sale state");
-        _;
-    }
+    // modifier atSaleState(uint256 _saleState) {
+    //     require(s.saleState == _saleState, "Cannot call function, not in correct sale state");
+    //     _;
+    // }
 
     /**
      * To change the starting tokenId, please override this function.
@@ -630,16 +630,18 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
         uint256 quantity
     ) internal virtual {}
 
-    function setSaleState(uint256 saleState_) public {
-        s.saleState = saleState_;
-    }
+    // function setSaleState(uint256 saleState_) public {
+    //     s.saleState = saleState_;
+    // }
 
     function devMint(address to, uint256 quantity) public payable {
         LibAccessControl._enforceOwner();
         _safeMint(to, quantity);
     }
 
-    function publicMint(uint256 quantity) public payable atSaleState(SALE_STATE_PUBLIC) {
+    function publicMint(
+        uint256 quantity /**atSaleState(SALE_STATE_PUBLIC) */
+    ) public payable {
         require(msg.value >= quantity * erc721AStorage().publicMintPrice, "Insufficient funds to mint");
         _safeMint(msg.sender, quantity);
     }
