@@ -22,14 +22,14 @@ describe('DiamondTest', async function () {
   it('should add erc721A functions', async () => {
     const erc721Instance = await ethers.getContractAt('ERC721AFacet', diamondAddress);
 
-    // try minting!
-    await erc721Instance.initializeERC721AFacet('hello diamond saw', 'WORLD');
-
-    await erc721Instance.devMint(3);
-
-    const nftOwner = await erc721Instance.ownerOf(1);
     const accounts = await ethers.getSigners()
     const contractOwner = accounts[0]
+
+    // try minting!
+    await erc721Instance.devMint(contractOwner.address, 3);
+
+    const nftOwner = await erc721Instance.ownerOf(1);
+    
     expect(nftOwner).to.equal(contractOwner.address);
   })
 })

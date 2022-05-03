@@ -3,17 +3,18 @@
 
 pragma solidity ^0.8.4;
 
-import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
-import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
-import '@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol';
-import '@openzeppelin/contracts/utils/Address.sol';
-import '@openzeppelin/contracts/utils/Context.sol';
-import '@openzeppelin/contracts/utils/Strings.sol';
-import '@openzeppelin/contracts/utils/introspection/ERC165.sol';
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import './AppStorage.sol';
+import "./AppStorage.sol";
+import "./AccessControlFacet.sol";
 
-import { LibDiamond } from "../libraries/LibDiamond.sol";
+import {LibDiamond} from "../libraries/LibDiamond.sol";
 
 error ApprovalCallerNotOwnerNorApproved();
 error ApprovalQueryForNonexistentToken();
@@ -39,7 +40,7 @@ error URIQueryForNonexistentToken();
  *
  * Assumes that the maximum token id cannot exceed 2**256 - 1 (max value of uint256).
  */
-contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata {
+contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessControlFacet {
     using Address for address;
     using Strings for uint256;
 
@@ -71,35 +72,27 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata {
 
     struct ERC721AStorage {
         // The tokenId of the next token to be minted.
-        uint256  _currentIndex;
-
+        uint256 _currentIndex;
         // The number of tokens burned.
-        uint256  _burnCounter;
-
+        uint256 _burnCounter;
         // Token name
         string _name;
-
         // Token symbol
         string _symbol;
-
         // Mapping from token ID to ownership details
         // An empty struct value does not necessarily mean the token is unowned. See _ownershipOf implementation for details.
-        mapping(uint256 => TokenOwnership)  _ownerships;
-
+        mapping(uint256 => TokenOwnership) _ownerships;
         // Mapping owner address to address data
         mapping(address => AddressData) _addressData;
-
         // Mapping from token ID to approved address
         mapping(uint256 => address) _tokenApprovals;
-
         // Mapping from owner to operator approvals
         mapping(address => mapping(address => bool)) _operatorApprovals;
-
         // public mint price
         uint256 publicMintPrice;
     }
 
-    function erc721AStorage() internal pure returns(ERC721AStorage storage es) {
+    function erc721AStorage() internal pure returns (ERC721AStorage storage es) {
         bytes32 position = keccak256("erc721a.facet.storage");
         assembly {
             es.slot := position
@@ -144,10 +137,7 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata {
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
-        return
-            interfaceId == type(IERC721).interfaceId ||
-            interfaceId == type(IERC721Metadata).interfaceId ||
-            super.supportsInterface(interfaceId);
+        return interfaceId == type(IERC721).interfaceId || interfaceId == type(IERC721Metadata).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /**
@@ -246,7 +236,7 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
 
         string memory baseURI = _baseURI();
-        return bytes(baseURI).length != 0 ? string(abi.encodePacked(baseURI, tokenId.toString())) : '';
+        return bytes(baseURI).length != 0 ? string(abi.encodePacked(baseURI, tokenId.toString())) : "";
     }
 
     /**
@@ -255,7 +245,7 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata {
      * by default, can be overriden in child contracts.
      */
     function _baseURI() internal view virtual returns (string memory) {
-        return '';
+        return "";
     }
 
     /**
@@ -317,7 +307,7 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata {
         address to,
         uint256 tokenId
     ) public virtual override {
-        safeTransferFrom(from, to, tokenId, '');
+        safeTransferFrom(from, to, tokenId, "");
     }
 
     /**
@@ -347,7 +337,7 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata {
     }
 
     function _safeMint(address to, uint256 quantity) internal {
-        _safeMint(to, quantity, '');
+        _safeMint(to, quantity, "");
     }
 
     /**
@@ -441,9 +431,7 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata {
 
         if (prevOwnership.addr != from) revert TransferFromIncorrectOwner();
 
-        bool isApprovedOrOwner = (_msgSender() == from ||
-            isApprovedForAll(from, _msgSender()) ||
-            getApproved(tokenId) == _msgSender());
+        bool isApprovedOrOwner = (_msgSender() == from || isApprovedForAll(from, _msgSender()) || getApproved(tokenId) == _msgSender());
 
         if (!isApprovedOrOwner) revert TransferCallerNotOwnerNorApproved();
         if (to == address(0)) revert TransferToZeroAddress();
@@ -505,9 +493,7 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata {
         address from = prevOwnership.addr;
 
         if (approvalCheck) {
-            bool isApprovedOrOwner = (_msgSender() == from ||
-                isApprovedForAll(from, _msgSender()) ||
-                getApproved(tokenId) == _msgSender());
+            bool isApprovedOrOwner = (_msgSender() == from || isApprovedForAll(from, _msgSender()) || getApproved(tokenId) == _msgSender());
 
             if (!isApprovedOrOwner) revert TransferCallerNotOwnerNorApproved();
         }
@@ -645,9 +631,9 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata {
         s.saleState = saleState_;
     }
 
-    function devMint(uint256 quantity) public payable {
-        // LibDiamond.enforceIsContractOwner();
-        _safeMint(msg.sender, quantity);
+    function devMint(address to, uint256 quantity) public payable {
+        LibAccessControl._enforceOwner();
+        _safeMint(to, quantity);
     }
 
     function publicMint(uint256 quantity) public payable atSaleState(SALE_STATE_PUBLIC) {
