@@ -34,8 +34,6 @@ library LibDiamond {
         // Used to query if a contract implements an interface.
         // Used to implement ERC-165.
         mapping(bytes4 => bool) supportedInterfaces;
-        // owner of the contract
-        address contractOwner;
     }
 
     function diamondStorage() internal pure returns (DiamondStorage storage ds) {
@@ -43,23 +41,6 @@ library LibDiamond {
         assembly {
             ds.slot := position
         }
-    }
-
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    function setContractOwner(address _newOwner) internal {
-        DiamondStorage storage ds = diamondStorage();
-        address previousOwner = ds.contractOwner;
-        ds.contractOwner = _newOwner;
-        emit OwnershipTransferred(previousOwner, _newOwner);
-    }
-
-    function contractOwner() internal view returns (address contractOwner_) {
-        contractOwner_ = diamondStorage().contractOwner;
-    }
-
-    function enforceIsContractOwner() internal view {
-        require(msg.sender == diamondStorage().contractOwner, "LibDiamond: Must be contract owner");
     }
 
     event DiamondCut(IDiamondCut.FacetCut[] _diamondCut, address _init, bytes _calldata);
