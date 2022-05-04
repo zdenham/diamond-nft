@@ -40,4 +40,5 @@ In this example, we deploy an ERC721A single cut Diamond for <400,000 gas, which
 - [ x ] Make ERC721AFaucet Initializable
 - [ x ] Whatever else is left to fully comply to the diamond standard
 - [ ] Add a "gas cache" where we store SOME selector mappings locally on the diamond (for highly trafficked write calls)
+- [ ] Add an optional facet array gas cache to make loupe operations cheaper
 - [ ] More tests
