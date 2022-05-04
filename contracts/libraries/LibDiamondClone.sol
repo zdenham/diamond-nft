@@ -24,7 +24,7 @@ library LibDiamondClone {
         }
     }
 
-    function cutFromSaw(
+    function cutWithDiamondSaw(
         address diamondSawAddress,
         address[] memory facetAddresses,
         address _init, // base facet address

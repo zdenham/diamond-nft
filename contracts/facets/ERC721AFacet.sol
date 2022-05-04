@@ -13,6 +13,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./AccessControlFacet.sol";
 import "../utils/DiamondInitializable.sol";
+import "./DiamondCloneCutFacet.sol";
 
 error ApprovalCallerNotOwnerNorApproved();
 error ApprovalQueryForNonexistentToken();
@@ -38,7 +39,7 @@ error URIQueryForNonexistentToken();
  *
  * Assumes that the maximum token id cannot exceed 2**256 - 1 (max value of uint256).
  */
-contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessControlFacet, DiamondInitializable {
+contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessControlFacet, DiamondInitializable, DiamondCloneCutFacet {
     using Address for address;
     using Strings for uint256;
 

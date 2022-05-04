@@ -11,6 +11,10 @@ contract DiamondClone {
         bytes memory _calldata // appropriate call data
     ) {
         // First facet should be the saw cutter facet
+        (bool success, ) = facetAddresses[0].delegatecall(
+            abi.encodeWithSignature("initialCut(address,address[],address,bytes)", diamondSawAddress, facetAddresses, _init, _calldata)
+        );
+        require(success, "Failed to cut diamond from saw");
     }
 
     // Find facet for function that is called and execute the
