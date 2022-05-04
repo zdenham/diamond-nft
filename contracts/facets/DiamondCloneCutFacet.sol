@@ -7,12 +7,21 @@ pragma solidity ^0.8.0;
 /******************************************************************************/
 
 import {IDiamondCut} from "../interfaces/IDiamondCut.sol";
-import {LibDiamondSaw} from "../libraries/LibDiamondSaw.sol";
+import "../libraries/LibDiamondClone.sol";
 
 // Remember to add the loupe functions from DiamondLoupeFacet to the diamond.
 // The loupe functions are required by the EIP2535 Diamonds standard
 
 contract DiamondCutFacet is IDiamondCut {
+    function cutFromSaw(
+        address diamondSawAddress,
+        address[] memory facetAddresses,
+        address _init, // base facet address
+        bytes memory _calldata // appropriate call data
+    ) external {
+        LibDiamondClone.cutFromSaw(diamondSawAddress, facetAddresses, _init, _calldata);
+    }
+
     /// @notice Add/replace/remove any number of functions and optionally execute
     ///         a function with delegatecall
     /// @param _diamondCut Contains the facet addresses and function selectors
@@ -23,8 +32,7 @@ contract DiamondCutFacet is IDiamondCut {
         FacetCut[] calldata _diamondCut,
         address _init,
         bytes calldata _calldata
-    ) external override {
-        // LibDiamond.enforceIsContractOwner();
-        LibDiamondSaw.diamondCut(_diamondCut, _init, _calldata);
+    ) public override {
+        // LibDiamondSaw.diamondCut(_diamondCut, _init, _calldata);
     }
 }

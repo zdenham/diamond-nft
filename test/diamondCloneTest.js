@@ -38,4 +38,8 @@ describe('DiamondTest', async function () {
     
     expect(nftOwner).to.equal(contractOwner.address);
   })
+
+  it('should emit an initial DiamondCut event', async () => {
+    // TODO!
+  })
 })

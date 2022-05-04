@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "../DiamondSaw.sol";
+
 library LibDiamondClone {
     bytes32 constant DIAMOND_CLONE_STORAGE_POSITION = keccak256("diamond.standard.diamond.clone.storage");
+
+    event DiamondCut(IDiamondCut.FacetCut[] _diamondCut, address _init, bytes _calldata);
 
     struct DiamondCloneStorage {
         // address of the diamond saw contract
@@ -20,14 +24,37 @@ library LibDiamondClone {
         }
     }
 
-    function diamondCut(address _facetAddress, bytes memory _calldata) internal {
-        (bool success, bytes memory error) = _facetAddress.delegatecall(_calldata);
+    function cutFromSaw(
+        address diamondSawAddress,
+        address[] memory facetAddresses,
+        address _init, // base facet address
+        bytes memory _calldata // appropriate call data
+    ) internal {
+        LibDiamondClone.DiamondCloneStorage storage s = LibDiamondClone.getDiamondCloneStorage();
+        s.diamondSawAddress = diamondSawAddress;
+
+        IDiamondCut.FacetCut[] memory cuts = new IDiamondCut.FacetCut[](facetAddresses.length);
+
+        // emit the diamond cut event
+        for (uint256 i; i < facetAddresses.length; i++) {
+            address facetAddress = facetAddresses[i];
+            bytes4[] memory selectors = DiamondSaw(diamondSawAddress).functionSelectorsForFacetAddress(facetAddress);
+
+            cuts[i].facetAddress = facetAddresses[i];
+            cuts[i].functionSelectors = selectors;
+            s.facetAddresses[facetAddress] = true;
+        }
+
+        emit DiamondCut(cuts, _init, _calldata);
+
+        // call the init function
+        (bool success, bytes memory error) = _init.delegatecall(_calldata);
         if (!success) {
             if (error.length > 0) {
                 // bubble up the error
                 revert(string(error));
             } else {
-                revert("LibDiamondCut: _init function reverted");
+                revert("LibDiamondClone: _init function reverted");
             }
         }
     }
