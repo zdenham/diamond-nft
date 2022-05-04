@@ -1,37 +1,30 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/******************************************************************************\
-* Author: Nick Mudge <nick@perfectabstractions.com> (https://twitter.com/mudgen)
-* EIP-2535 Diamonds: https://eips.ethereum.org/EIPS/eip-2535
-/******************************************************************************/
-
 import "../libraries/LibDiamondClone.sol";
+import "../libraries/LibAccessControl.sol";
+
+// import "../utils/DiamondInitializable.sol";
 
 // Remember to add the loupe functions from DiamondLoupeFacet to the diamond.
 // The loupe functions are required by the EIP2535 Diamonds standard
 
-contract DiamondCloneCutFacet {
+contract DiamondCloneCutFacet is IDiamondCut {
     function initialCut(
         address diamondSawAddress,
-        address[] memory facetAddresses,
+        address[] calldata facetAddresses,
         address _init, // base facet address
-        bytes memory _calldata // appropriate call data
+        bytes calldata _calldata // appropriate call data
     ) external {
-        LibDiamondClone.cutWithDiamondSaw(diamondSawAddress, facetAddresses, _init, _calldata);
+        LibDiamondClone.initialCutWithDiamondSaw(diamondSawAddress, facetAddresses, _init, _calldata);
     }
 
-    /// @notice Add/replace/remove any number of functions and optionally execute
-    ///         a function with delegatecall
-    /// @param _diamondCut Contains the facet addresses and function selectors
-    /// @param _init The address of the contract or facet to execute _calldata
-    /// @param _calldata A function call, including function selector and arguments
-    ///                  _calldata is executed with delegatecall on _init
     function diamondCut(
         FacetCut[] calldata _diamondCut,
         address _init,
         bytes calldata _calldata
-    ) public override {
-        revert("SingleCutOnly");
+    ) external override {
+        LibAccessControl._enforceOwner();
+        LibDiamondClone.cutWithDiamondSaw(_diamondCut, _init, _calldata);
     }
 }

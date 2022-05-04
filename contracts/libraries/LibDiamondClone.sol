@@ -24,15 +24,18 @@ library LibDiamondClone {
         }
     }
 
-    function cutWithDiamondSaw(
+    function initialCutWithDiamondSaw(
         address diamondSawAddress,
-        address[] memory facetAddresses,
+        address[] calldata facetAddresses,
         address _init, // base facet address
-        bytes memory _calldata // appropriate call data
+        bytes calldata _calldata // appropriate call data
     ) internal {
         LibDiamondClone.DiamondCloneStorage storage s = LibDiamondClone.getDiamondCloneStorage();
-        s.diamondSawAddress = diamondSawAddress;
 
+        require(diamondSawAddress != address(0), "Must set saw addy");
+        require(s.diamondSawAddress == address(0), "Already inited");
+
+        s.diamondSawAddress = diamondSawAddress;
         IDiamondCut.FacetCut[] memory cuts = new IDiamondCut.FacetCut[](facetAddresses.length);
 
         // emit the diamond cut event
@@ -40,12 +43,59 @@ library LibDiamondClone {
             address facetAddress = facetAddresses[i];
             bytes4[] memory selectors = DiamondSaw(diamondSawAddress).functionSelectorsForFacetAddress(facetAddress);
 
+            require(selectors.length > 0, "Facet is not supported!!!");
+
             cuts[i].facetAddress = facetAddresses[i];
             cuts[i].functionSelectors = selectors;
             s.facetAddresses[facetAddress] = true;
         }
 
         emit DiamondCut(cuts, _init, _calldata);
+
+        // call the init function
+        (bool success, bytes memory error) = _init.delegatecall(_calldata);
+        if (!success) {
+            if (error.length > 0) {
+                // bubble up the error
+                revert(string(error));
+            } else {
+                revert("LibDiamondClone: _init function reverted");
+            }
+        }
+    }
+
+    function cutWithDiamondSaw(
+        IDiamondCut.FacetCut[] memory _diamondCut,
+        address _init,
+        bytes calldata _calldata
+    ) internal {
+        DiamondCloneStorage storage s = getDiamondCloneStorage();
+
+        // emit the diamond cut event
+        for (uint256 i; i < _diamondCut.length; i++) {
+            IDiamondCut.FacetCut memory cut = _diamondCut[i];
+            bytes4[] memory selectors = DiamondSaw(s.diamondSawAddress).functionSelectorsForFacetAddress(cut.facetAddress);
+
+            require(selectors.length > 0, "Facet is not supported!!!");
+            require(selectors.length == cut.functionSelectors.length, "You can only modify all selectors at once with diamond saw");
+
+            // NOTE we override the passed selectors after validating the length matches
+            // With diamond saw we can only add / remove all selectors for a given facet
+            cut.functionSelectors = selectors;
+
+            // if the address is already in the facet map
+            // remove it and remove all the selectors
+            // otherwise add the selectors
+            if (s.facetAddresses[cut.facetAddress]) {
+                require(cut.action == IDiamondCut.FacetCutAction.Remove, "Can only remove existing facet selectors");
+                s.facetAddresses[cut.facetAddress] = false;
+            } else {
+                require(cut.action == IDiamondCut.FacetCutAction.Add, "Can only add non-existing facet selectors");
+                s.facetAddresses[cut.facetAddress] = true;
+            }
+        }
+
+        emit DiamondCut(_diamondCut, _init, _calldata);
 
         // call the init function
         (bool success, bytes memory error) = _init.delegatecall(_calldata);

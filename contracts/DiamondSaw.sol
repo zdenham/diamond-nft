@@ -33,9 +33,9 @@ contract DiamondSaw {
     // otherwise diamond clones will not be guarunteed to be immutable
     // for now just do a normal library diamond cut
     function addFacetPattern(
-        IDiamondCut.FacetCut[] memory _facetAdds,
+        IDiamondCut.FacetCut[] calldata _facetAdds,
         address _init,
-        bytes memory _calldata
+        bytes calldata _calldata
     ) public {
         LibDiamondSaw.diamondCut(_facetAdds, _init, _calldata);
     }
