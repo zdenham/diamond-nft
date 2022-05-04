@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "../DiamondSaw.sol";
+import {IDiamondLoupe} from "../interfaces/IDiamondLoupe.sol";
 
 library LibDiamondClone {
     bytes32 constant DIAMOND_CLONE_STORAGE_POSITION = keccak256("diamond.standard.diamond.clone.storage");
@@ -13,8 +14,10 @@ library LibDiamondClone {
         address diamondSawAddress;
         // mapping to all the facets this diamond implements.
         mapping(address => bool) facetAddresses;
-        // gas cache (TODO)
-        mapping(bytes4 => address) selectorGasCache;
+        // optional gas cache for highly trafficked write selectors
+        mapping(bytes4 => address) optionalSelectorGasCache;
+        // optional facet gas cache to make loupe cheaper
+        address[] optionalFacetAddressGasCache;
     }
 
     function getDiamondCloneStorage() internal pure returns (DiamondCloneStorage storage s) {
@@ -26,7 +29,7 @@ library LibDiamondClone {
 
     function initialCutWithDiamondSaw(
         address diamondSawAddress,
-        address[] calldata facetAddresses,
+        address[] calldata _facetAddresses,
         address _init, // base facet address
         bytes calldata _calldata // appropriate call data
     ) internal {
@@ -36,16 +39,16 @@ library LibDiamondClone {
         require(s.diamondSawAddress == address(0), "Already inited");
 
         s.diamondSawAddress = diamondSawAddress;
-        IDiamondCut.FacetCut[] memory cuts = new IDiamondCut.FacetCut[](facetAddresses.length);
+        IDiamondCut.FacetCut[] memory cuts = new IDiamondCut.FacetCut[](_facetAddresses.length);
 
         // emit the diamond cut event
-        for (uint256 i; i < facetAddresses.length; i++) {
-            address facetAddress = facetAddresses[i];
+        for (uint256 i; i < _facetAddresses.length; i++) {
+            address facetAddress = _facetAddresses[i];
             bytes4[] memory selectors = DiamondSaw(diamondSawAddress).functionSelectorsForFacetAddress(facetAddress);
 
             require(selectors.length > 0, "Facet is not supported!!!");
 
-            cuts[i].facetAddress = facetAddresses[i];
+            cuts[i].facetAddress = _facetAddresses[i];
             cuts[i].functionSelectors = selectors;
             s.facetAddresses[facetAddress] = true;
         }
@@ -118,6 +121,53 @@ library LibDiamondClone {
 
         assembly {
             addr := mload(add(res, 32))
+        }
+    }
+
+    /**
+     * LOUPE FUNCTIONALITY BELOW
+     */
+
+    function facets() internal view returns (IDiamondLoupe.Facet[] memory facets_) {
+        LibDiamondClone.DiamondCloneStorage storage ds = LibDiamondClone.getDiamondCloneStorage();
+        IDiamondLoupe.Facet[] memory allSawFacets = DiamondSaw(ds.diamondSawAddress).allFacetsWithSelectors();
+
+        uint256 copyIndex = 0;
+
+        // start the array with full lengh of saw facets
+        facets_ = new IDiamondLoupe.Facet[](allSawFacets.length);
+
+        for (uint256 i; i < allSawFacets.length; i++) {
+            if (ds.facetAddresses[allSawFacets[i].facetAddress]) {
+                facets_[copyIndex] = allSawFacets[i];
+            } else {
+                // reduce the length of the facets_ array
+                assembly {
+                    mstore(facets_, sub(mload(facets_), 1))
+                }
+            }
+            copyIndex++;
+        }
+    }
+
+    function facetAddresses() internal view returns (address[] memory facetAddresses_) {
+        LibDiamondClone.DiamondCloneStorage storage ds = LibDiamondClone.getDiamondCloneStorage();
+
+        address[] memory allSawFacetAddresses = DiamondSaw(ds.diamondSawAddress).allFacetAddresses();
+        facetAddresses_ = new address[](allSawFacetAddresses.length);
+
+        uint256 copyIndex = 0;
+
+        for (uint256 i; i < allSawFacetAddresses.length; i++) {
+            if (ds.facetAddresses[allSawFacetAddresses[i]]) {
+                facetAddresses_[copyIndex] = allSawFacetAddresses[i];
+            } else {
+                assembly {
+                    mstore(facetAddresses_, sub(mload(facetAddresses_), 1))
+                }
+            }
+
+            copyIndex++;
         }
     }
 }
