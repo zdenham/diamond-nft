@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts (last updated v4.6.0) (access/AccessControl.sol)
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 pragma solidity ^0.8.0;
 
-library LibAccessControl {
+library AccessControlLib {
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     struct AccessControlStorage {

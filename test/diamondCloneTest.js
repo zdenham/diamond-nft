@@ -13,18 +13,18 @@ const { assert, expect } = require('chai')
 const { ethers } = require('hardhat')
 
 describe('DiamondTest', async function () {
-  let diamondAddress, erc721Instance, contractOwner, accounts
+  let diamondAddress, baseNFTFacetInstance, contractOwner, accounts
 
   before(async function () {
     diamondAddress = await deployDiamond();
-    erc721Instance = await ethers.getContractAt('ERC721AFacet', diamondAddress);
+    baseNFTFacetInstance = await ethers.getContractAt('BaseNFTFacet', diamondAddress);
     accounts = await ethers.getSigners()
     contractOwner = accounts[0]
   })
 
   it('should properly pass through the name and symbol from calldata', async () => {
-    const name = await erc721Instance.name();
-    const symbol = await erc721Instance.symbol();
+    const name = await baseNFTFacetInstance.name();
+    const symbol = await baseNFTFacetInstance.symbol();
 
     expect(name).to.equal('Blah');
     expect(symbol).to.equal('Blah');
@@ -32,9 +32,9 @@ describe('DiamondTest', async function () {
 
   it('should add erc721A functions', async () => {
     // try minting!
-    await erc721Instance.devMint(contractOwner.address, 3);
+    await baseNFTFacetInstance.devMint(contractOwner.address, 3);
 
-    const nftOwner = await erc721Instance.ownerOf(1);
+    const nftOwner = await baseNFTFacetInstance.ownerOf(1);
     
     expect(nftOwner).to.equal(contractOwner.address);
   })

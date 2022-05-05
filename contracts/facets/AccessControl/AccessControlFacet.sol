@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/IAccessControl.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "../libraries/LibAccessControl.sol";
+import "./AccessControlLib.sol";
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where

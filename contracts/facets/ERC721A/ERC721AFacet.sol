@@ -1,133 +1,31 @@
 // SPDX-License-Identifier: MIT
-// Creator: Chiru Labs
 
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "./AccessControlFacet.sol";
-import "./DiamondCloneCutFacet.sol";
-
-error ApprovalCallerNotOwnerNorApproved();
-error ApprovalQueryForNonexistentToken();
-error ApproveToCaller();
-error ApprovalToCurrentOwner();
-error BalanceQueryForZeroAddress();
-error MintToZeroAddress();
-error MintZeroQuantity();
-error OwnerQueryForNonexistentToken();
-error TransferCallerNotOwnerNorApproved();
-error TransferFromIncorrectOwner();
-error TransferToNonERC721ReceiverImplementer();
-error TransferToZeroAddress();
-error URIQueryForNonexistentToken();
+import "./ERC721ALib.sol";
 
 /**
  * @dev Implementation of https://eips.ethereum.org/EIPS/eip-721[ERC721] Non-Fungible Token Standard, including
  * the Metadata extension. Built to optimize for lower gas during batch mints.
  *
- * Assumes serials are sequentially minted starting at _startTokenId() (defaults to 0, e.g. 0, 1, 2, 3..).
+ * Assumes serials are sequentially minted starting at ERC721ALib._startTokenId() (defaults to 0, e.g. 0, 1, 2, 3..).
  *
  * Assumes that an owner cannot have more than 2**64 - 1 (max value of uint64) of supply.
  *
  * Assumes that the maximum token id cannot exceed 2**256 - 1 (max value of uint256).
  */
-contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessControlFacet, DiamondCloneCutFacet {
+contract ERC721AFacet is ERC165, IERC721, IERC721Metadata {
     using Address for address;
     using Strings for uint256;
-
-    // Compiler will pack this into a single 256bit word.
-    struct TokenOwnership {
-        // The address of the owner.
-        address addr;
-        // Keeps track of the start time of ownership with minimal overhead for tokenomics.
-        uint64 startTimestamp;
-        // Whether the token has been burned.
-        bool burned;
-    }
-
-    // Compiler will pack this into a single 256bit word.
-    struct AddressData {
-        // Realistically, 2**64-1 is more than enough.
-        uint64 balance;
-        // Keeps track of mint count with minimal overhead for tokenomics.
-        uint64 numberMinted;
-        // Keeps track of burn count with minimal overhead for tokenomics.
-        uint64 numberBurned;
-        // For miscellaneous variable(s) pertaining to the address
-        // (e.g. number of whitelist mint slots used).
-        // If there are multiple variables, please pack them into a uint64.
-        uint64 aux;
-    }
-
-    struct ERC721AStorage {
-        // The tokenId of the next token to be minted.
-        uint256 _currentIndex;
-        // The number of tokens burned.
-        uint256 _burnCounter;
-        // Token name
-        string _name;
-        // Token symbol
-        string _symbol;
-        // Mapping from token ID to ownership details
-        // An empty struct value does not necessarily mean the token is unowned. See _ownershipOf implementation for details.
-        mapping(uint256 => TokenOwnership) _ownerships;
-        // Mapping owner address to address data
-        mapping(address => AddressData) _addressData;
-        // Mapping from token ID to approved address
-        mapping(uint256 => address) _tokenApprovals;
-        // Mapping from owner to operator approvals
-        mapping(address => mapping(address => bool)) _operatorApprovals;
-        // public mint price
-        uint256 publicMintPrice;
-    }
-
-    function init(string memory name_, string memory symbol_) external {
-        ERC721AStorage storage s = erc721AStorage();
-
-        require(bytes(symbol_).length > 0, "Blank symbol");
-        require(bytes(s._symbol).length == 0, "Already init");
-
-        LibAccessControl._transferOwnership(msg.sender);
-        s._name = name_;
-        s._symbol = symbol_;
-        s._currentIndex = 1;
-    }
-
-    function erc721AStorage() internal pure returns (ERC721AStorage storage es) {
-        bytes32 position = keccak256("erc721a.facet.storage");
-        assembly {
-            es.slot := position
-        }
-    }
-
-    // modifier atSaleState(uint256 _saleState) {
-    //     require(s.saleState == _saleState, "Cannot call function, not in correct sale state");
-    //     _;
-    // }
-
-    /**
-     * To change the starting tokenId, please override this function.
-     */
-    function _startTokenId() internal view virtual returns (uint256) {
-        return 1;
-    }
 
     /**
      * @dev Burned tokens are calculated here, use _totalMinted() if you want to count just minted tokens.
      */
     function totalSupply() public view returns (uint256) {
-        // Counter underflow is impossible as _burnCounter cannot be incremented
-        // more than _currentIndex - _startTokenId() times
-        unchecked {
-            return erc721AStorage()._currentIndex - erc721AStorage()._burnCounter - _startTokenId();
-        }
+        return ERC721ALib.totalSupply();
     }
 
     /**
@@ -135,17 +33,10 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
      */
     function _totalMinted() internal view returns (uint256) {
         // Counter underflow is impossible as _currentIndex does not decrement,
-        // and it is initialized to _startTokenId()
+        // and it is initialized to ERC721ALib._startTokenId()
         unchecked {
-            return erc721AStorage()._currentIndex - _startTokenId();
+            return ERC721ALib.erc721AStorage()._currentIndex - ERC721ALib._startTokenId();
         }
-    }
-
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
-        return interfaceId == type(IERC721).interfaceId || interfaceId == type(IERC721Metadata).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /**
@@ -153,28 +44,28 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
      */
     function balanceOf(address owner) public view override returns (uint256) {
         if (owner == address(0)) revert BalanceQueryForZeroAddress();
-        return uint256(erc721AStorage()._addressData[owner].balance);
+        return uint256(ERC721ALib.erc721AStorage()._addressData[owner].balance);
     }
 
     /**
      * Returns the number of tokens minted by `owner`.
      */
     function _numberMinted(address owner) internal view returns (uint256) {
-        return uint256(erc721AStorage()._addressData[owner].numberMinted);
+        return uint256(ERC721ALib.erc721AStorage()._addressData[owner].numberMinted);
     }
 
     /**
      * Returns the number of tokens burned by or on behalf of `owner`.
      */
     function _numberBurned(address owner) internal view returns (uint256) {
-        return uint256(erc721AStorage()._addressData[owner].numberBurned);
+        return uint256(ERC721ALib.erc721AStorage()._addressData[owner].numberBurned);
     }
 
     /**
      * Returns the auxillary data for `owner`. (e.g. number of whitelist mint slots used).
      */
     function _getAux(address owner) internal view returns (uint64) {
-        return erc721AStorage()._addressData[owner].aux;
+        return ERC721ALib.erc721AStorage()._addressData[owner].aux;
     }
 
     /**
@@ -182,19 +73,20 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
      * If there are multiple variables, please pack them into a uint64.
      */
     function _setAux(address owner, uint64 aux) internal {
-        erc721AStorage()._addressData[owner].aux = aux;
+        ERC721ALib.erc721AStorage()._addressData[owner].aux = aux;
     }
 
     /**
      * Gas spent here starts off proportional to the maximum mint batch size.
      * It gradually moves to O(1) as tokens get transferred around in the collection over time.
      */
-    function _ownershipOf(uint256 tokenId) internal view returns (TokenOwnership memory) {
+    function _ownershipOf(uint256 tokenId) internal view returns (ERC721ALib.TokenOwnership memory) {
         uint256 curr = tokenId;
 
+        ERC721ALib.ERC721AStorage storage s = ERC721ALib.erc721AStorage();
         unchecked {
-            if (_startTokenId() <= curr && curr < erc721AStorage()._currentIndex) {
-                TokenOwnership memory ownership = erc721AStorage()._ownerships[curr];
+            if (ERC721ALib._startTokenId() <= curr && curr < s._currentIndex) {
+                ERC721ALib.TokenOwnership memory ownership = s._ownerships[curr];
                 if (!ownership.burned) {
                     if (ownership.addr != address(0)) {
                         return ownership;
@@ -205,7 +97,7 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
                     // Hence, curr will not underflow.
                     while (true) {
                         curr--;
-                        ownership = erc721AStorage()._ownerships[curr];
+                        ownership = s._ownerships[curr];
                         if (ownership.addr != address(0)) {
                             return ownership;
                         }
@@ -227,14 +119,14 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
      * @dev See {IERC721Metadata-name}.
      */
     function name() public view virtual override returns (string memory) {
-        return erc721AStorage()._name;
+        return ERC721ALib.erc721AStorage()._name;
     }
 
     /**
      * @dev See {IERC721Metadata-symbol}.
      */
     function symbol() public view virtual override returns (string memory) {
-        return erc721AStorage()._symbol;
+        return ERC721ALib.erc721AStorage()._symbol;
     }
 
     /**
@@ -276,7 +168,7 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
     function getApproved(uint256 tokenId) public view override returns (address) {
         if (!_exists(tokenId)) revert ApprovalQueryForNonexistentToken();
 
-        return erc721AStorage()._tokenApprovals[tokenId];
+        return ERC721ALib.erc721AStorage()._tokenApprovals[tokenId];
     }
 
     /**
@@ -285,7 +177,7 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
     function setApprovalForAll(address operator, bool approved) public virtual override {
         if (operator == _msgSender()) revert ApproveToCaller();
 
-        erc721AStorage()._operatorApprovals[_msgSender()][operator] = approved;
+        ERC721ALib.erc721AStorage()._operatorApprovals[_msgSender()][operator] = approved;
         emit ApprovalForAll(_msgSender(), operator, approved);
     }
 
@@ -293,7 +185,7 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
      * @dev See {IERC721-isApprovedForAll}.
      */
     function isApprovedForAll(address owner, address operator) public view virtual override returns (bool) {
-        return erc721AStorage()._operatorApprovals[owner][operator];
+        return ERC721ALib.erc721AStorage()._operatorApprovals[owner][operator];
     }
 
     /**
@@ -341,83 +233,10 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
      * Tokens start existing when they are minted (`_mint`),
      */
     function _exists(uint256 tokenId) internal view returns (bool) {
-        return _startTokenId() <= tokenId && tokenId < erc721AStorage()._currentIndex && !erc721AStorage()._ownerships[tokenId].burned;
-    }
-
-    function _safeMint(address to, uint256 quantity) internal {
-        _safeMint(to, quantity, "");
-    }
-
-    /**
-     * @dev Safely mints `quantity` tokens and transfers them to `to`.
-     *
-     * Requirements:
-     *
-     * - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called for each safe transfer.
-     * - `quantity` must be greater than 0.
-     *
-     * Emits a {Transfer} event.
-     */
-    function _safeMint(
-        address to,
-        uint256 quantity,
-        bytes memory _data
-    ) internal {
-        _mint(to, quantity, _data, true);
-    }
-
-    /**
-     * @dev Mints `quantity` tokens and transfers them to `to`.
-     *
-     * Requirements:
-     *
-     * - `to` cannot be the zero address.
-     * - `quantity` must be greater than 0.
-     *
-     * Emits a {Transfer} event.
-     */
-    function _mint(
-        address to,
-        uint256 quantity,
-        bytes memory _data,
-        bool safe
-    ) internal {
-        uint256 startTokenId = erc721AStorage()._currentIndex;
-        if (to == address(0)) revert MintToZeroAddress();
-        if (quantity == 0) revert MintZeroQuantity();
-
-        _beforeTokenTransfers(address(0), to, startTokenId, quantity);
-
-        // Overflows are incredibly unrealistic.
-        // balance or numberMinted overflow if current value of either + quantity > 1.8e19 (2**64) - 1
-        // updatedIndex overflows if _currentIndex + quantity > 1.2e77 (2**256) - 1
-        unchecked {
-            erc721AStorage()._addressData[to].balance += uint64(quantity);
-            erc721AStorage()._addressData[to].numberMinted += uint64(quantity);
-
-            erc721AStorage()._ownerships[startTokenId].addr = to;
-            erc721AStorage()._ownerships[startTokenId].startTimestamp = uint64(block.timestamp);
-
-            uint256 updatedIndex = startTokenId;
-            uint256 end = updatedIndex + quantity;
-
-            if (safe && to.isContract()) {
-                do {
-                    emit Transfer(address(0), to, updatedIndex);
-                    if (!_checkContractOnERC721Received(address(0), to, updatedIndex++, _data)) {
-                        revert TransferToNonERC721ReceiverImplementer();
-                    }
-                } while (updatedIndex != end);
-                // Reentrancy protection
-                if (erc721AStorage()._currentIndex != startTokenId) revert();
-            } else {
-                do {
-                    emit Transfer(address(0), to, updatedIndex++);
-                } while (updatedIndex != end);
-            }
-            erc721AStorage()._currentIndex = updatedIndex;
-        }
-        _afterTokenTransfers(address(0), to, startTokenId, quantity);
+        return
+            ERC721ALib._startTokenId() <= tokenId &&
+            tokenId < ERC721ALib.erc721AStorage()._currentIndex &&
+            !ERC721ALib.erc721AStorage()._ownerships[tokenId].burned;
     }
 
     /**
@@ -435,7 +254,8 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
         address to,
         uint256 tokenId
     ) private {
-        TokenOwnership memory prevOwnership = _ownershipOf(tokenId);
+        ERC721ALib.ERC721AStorage storage s = ERC721ALib.erc721AStorage();
+        ERC721ALib.TokenOwnership memory prevOwnership = _ownershipOf(tokenId);
 
         if (prevOwnership.addr != from) revert TransferFromIncorrectOwner();
 
@@ -453,21 +273,21 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
         // ownership above and the recipient's balance can't realistically overflow.
         // Counter overflow is incredibly unrealistic as tokenId would have to be 2**256.
         unchecked {
-            erc721AStorage()._addressData[from].balance -= 1;
-            erc721AStorage()._addressData[to].balance += 1;
+            s._addressData[from].balance -= 1;
+            s._addressData[to].balance += 1;
 
-            TokenOwnership storage currSlot = erc721AStorage()._ownerships[tokenId];
+            ERC721ALib.TokenOwnership storage currSlot = s._ownerships[tokenId];
             currSlot.addr = to;
             currSlot.startTimestamp = uint64(block.timestamp);
 
             // If the ownership slot of tokenId+1 is not explicitly set, that means the transfer initiator owns it.
             // Set the slot of tokenId+1 explicitly in storage to maintain correctness for ownerOf(tokenId+1) calls.
             uint256 nextTokenId = tokenId + 1;
-            TokenOwnership storage nextSlot = erc721AStorage()._ownerships[nextTokenId];
+            ERC721ALib.TokenOwnership storage nextSlot = s._ownerships[nextTokenId];
             if (nextSlot.addr == address(0)) {
                 // This will suffice for checking _exists(nextTokenId),
                 // as a burned slot cannot contain the zero address.
-                if (nextTokenId != erc721AStorage()._currentIndex) {
+                if (nextTokenId != s._currentIndex) {
                     nextSlot.addr = from;
                     nextSlot.startTimestamp = prevOwnership.startTimestamp;
                 }
@@ -496,7 +316,8 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
      * Emits a {Transfer} event.
      */
     function _burn(uint256 tokenId, bool approvalCheck) internal virtual {
-        TokenOwnership memory prevOwnership = _ownershipOf(tokenId);
+        ERC721ALib.TokenOwnership memory prevOwnership = _ownershipOf(tokenId);
+        ERC721ALib.ERC721AStorage storage s = ERC721ALib.erc721AStorage();
 
         address from = prevOwnership.addr;
 
@@ -515,12 +336,12 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
         // ownership above and the recipient's balance can't realistically overflow.
         // Counter overflow is incredibly unrealistic as tokenId would have to be 2**256.
         unchecked {
-            AddressData storage addressData = erc721AStorage()._addressData[from];
+            ERC721ALib.AddressData storage addressData = s._addressData[from];
             addressData.balance -= 1;
             addressData.numberBurned += 1;
 
             // Keep track of who burned the token, and the timestamp of burning.
-            TokenOwnership storage currSlot = erc721AStorage()._ownerships[tokenId];
+            ERC721ALib.TokenOwnership storage currSlot = s._ownerships[tokenId];
             currSlot.addr = from;
             currSlot.startTimestamp = uint64(block.timestamp);
             currSlot.burned = true;
@@ -528,11 +349,11 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
             // If the ownership slot of tokenId+1 is not explicitly set, that means the burn initiator owns it.
             // Set the slot of tokenId+1 explicitly in storage to maintain correctness for ownerOf(tokenId+1) calls.
             uint256 nextTokenId = tokenId + 1;
-            TokenOwnership storage nextSlot = erc721AStorage()._ownerships[nextTokenId];
+            ERC721ALib.TokenOwnership storage nextSlot = s._ownerships[nextTokenId];
             if (nextSlot.addr == address(0)) {
                 // This will suffice for checking _exists(nextTokenId),
                 // as a burned slot cannot contain the zero address.
-                if (nextTokenId != erc721AStorage()._currentIndex) {
+                if (nextTokenId != s._currentIndex) {
                     nextSlot.addr = from;
                     nextSlot.startTimestamp = prevOwnership.startTimestamp;
                 }
@@ -544,7 +365,7 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
 
         // Overflow not possible, as _burnCounter cannot be exceed _currentIndex times.
         unchecked {
-            erc721AStorage()._burnCounter++;
+            s._burnCounter++;
         }
     }
 
@@ -558,36 +379,8 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
         uint256 tokenId,
         address owner
     ) private {
-        erc721AStorage()._tokenApprovals[tokenId] = to;
+        ERC721ALib.erc721AStorage()._tokenApprovals[tokenId] = to;
         emit Approval(owner, to, tokenId);
-    }
-
-    /**
-     * @dev Internal function to invoke {IERC721Receiver-onERC721Received} on a target contract.
-     *
-     * @param from address representing the previous owner of the given token ID
-     * @param to target address that will receive the tokens
-     * @param tokenId uint256 ID of the token to be transferred
-     * @param _data bytes optional data to send along with the call
-     * @return bool whether the call correctly returned the expected magic value
-     */
-    function _checkContractOnERC721Received(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes memory _data
-    ) private returns (bool) {
-        try IERC721Receiver(to).onERC721Received(_msgSender(), from, tokenId, _data) returns (bytes4 retval) {
-            return retval == IERC721Receiver(to).onERC721Received.selector;
-        } catch (bytes memory reason) {
-            if (reason.length == 0) {
-                revert TransferToNonERC721ReceiverImplementer();
-            } else {
-                assembly {
-                    revert(add(32, reason), mload(reason))
-                }
-            }
-        }
     }
 
     /**
@@ -634,20 +427,4 @@ contract ERC721AFacet is Context, ERC165, IERC721, IERC721Metadata, AccessContro
         uint256 startTokenId,
         uint256 quantity
     ) internal virtual {}
-
-    // function setSaleState(uint256 saleState_) public {
-    //     s.saleState = saleState_;
-    // }
-
-    function devMint(address to, uint256 quantity) public payable {
-        LibAccessControl._enforceOwner();
-        _safeMint(to, quantity);
-    }
-
-    function publicMint(
-        uint256 quantity /**atSaleState(SALE_STATE_PUBLIC) */
-    ) public payable {
-        require(msg.value >= quantity * erc721AStorage().publicMintPrice, "Insufficient funds to mint");
-        _safeMint(msg.sender, quantity);
-    }
 }

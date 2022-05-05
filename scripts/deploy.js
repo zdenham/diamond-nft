@@ -13,9 +13,9 @@ async function deployDiamond () {
   // const diamondCutFacet = await DiamondCutFacet.deploy()
   // await diamondCutFacet.deployed()
 
-  const ERC721AFacet = await ethers.getContractFactory('ERC721AFacet')
-  const erc721AFacet = await ERC721AFacet.deploy();
-  await erc721AFacet.deployed();
+  const BaseNFTFacet = await ethers.getContractFactory('BaseNFTFacet')
+  const baseNFTFacet = await BaseNFTFacet.deploy();
+  await baseNFTFacet.deployed();
 
   // deploy the SAW!
   const DiamondSaw = await ethers.getContractFactory('DiamondSaw');
@@ -24,9 +24,9 @@ async function deployDiamond () {
 
   // add the ERC721A facet pattern to the SAW
   const add = [{
-    facetAddress: erc721AFacet.address,
+    facetAddress: baseNFTFacet.address,
     action: FacetCutAction.Add,
-    functionSelectors: getSelectors(erc721AFacet)
+    functionSelectors: getSelectors(baseNFTFacet)
   }];
 
   await diamondSaw.addFacetPattern(add, ethers.constants.AddressZero, '0x');
@@ -34,9 +34,9 @@ async function deployDiamond () {
   // deploy Diamond Clone
   const DiamondClone = await ethers.getContractFactory('DiamondClone');
 
-  let functionCall = erc721AFacet.interface.encodeFunctionData('init', ["Blah", "Blah"]);
+  let functionCall = baseNFTFacet.interface.encodeFunctionData('init', ["Blah", "Blah"]);
 
-  const diamondClone = await DiamondClone.deploy(diamondSaw.address, [erc721AFacet.address], erc721AFacet.address, functionCall);
+  const diamondClone = await DiamondClone.deploy(diamondSaw.address, [baseNFTFacet.address], baseNFTFacet.address, functionCall);
   await diamondClone.deployed();
 
   console.log('Diamond deployed:', diamondClone.address);
