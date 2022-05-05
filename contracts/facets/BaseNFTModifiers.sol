@@ -2,16 +2,16 @@
 
 pragma solidity ^0.8.4;
 
-import "./SaleStateLib.sol";
+import {BaseNFTLib} from "./BaseNFTLib.sol";
 
 abstract contract SaleStateModifiers {
-    modifier atSaleStateOnly(uint256 _gatedSaleState) {
-        require(_gatedSaleState == SaleStateLib.getSaleState(), "Cannot make call with current sale state");
+    modifier onlyAtSaleState(uint256 _gatedSaleState) {
+        require(_gatedSaleState == BaseNFTLib.saleState(), "Cannot make call with current sale state");
         _;
     }
 
-    modifier atOneOfSaleStatesOnly(uint256[] calldata _gatedSaleStates) {
-        uint256 currState = SaleStateLib.getSaleState();
+    modifier onlyAtOneOfSaleStates(uint256[] calldata _gatedSaleStates) {
+        uint256 currState = BaseNFTLib.saleState();
         for (uint256 i; i < _gatedSaleStates.length; i++) {
             if (_gatedSaleStates[i] == currState) {
                 _;

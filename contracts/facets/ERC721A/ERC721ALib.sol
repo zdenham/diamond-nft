@@ -170,7 +170,7 @@ library ERC721ALib {
         address to,
         uint256 tokenId,
         bytes memory _data
-    ) private returns (bool) {
+    ) internal returns (bool) {
         try IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, _data) returns (bytes4 retval) {
             return retval == IERC721Receiver(to).onERC721Received.selector;
         } catch (bytes memory reason) {
@@ -184,7 +184,7 @@ library ERC721ALib {
         }
     }
 
-    function totalSupply() public view returns (uint256) {
+    function totalSupply() internal view returns (uint256) {
         ERC721AStorage storage s = ERC721ALib.erc721AStorage();
         // Counter underflow is impossible as _burnCounter cannot be incremented
         // more than _currentIndex - _startTokenId() times
