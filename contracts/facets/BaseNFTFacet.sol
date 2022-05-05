@@ -8,7 +8,6 @@ import "./SaleState/SaleStateModifiers.sol";
 import "./AccessControl/AccessControlFacet.sol";
 import "./AccessControl/AccessControlModifiers.sol";
 import "./DiamondClone/DiamondCloneCutFacet.sol";
-import "./DiamondClone/DiamondCloneLoupeFacet.sol";
 import "./BaseNFTLib.sol";
 
 // Inherit from other facets in the BaseNFTFacet

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./libraries/LibDiamondCloneMinimal.sol";
+import "./libraries/DiamondCloneMinimalLib.sol";
 
 contract DiamondClone {
     constructor(
@@ -24,10 +24,10 @@ contract DiamondClone {
         // highly trafficked write selector on the diamond itself
         // referencing the selector gas cache will be cheaper than
         // calling externally
-        address facet = LibDiamondCloneMinimal._getFacetAddressForCall();
+        address facet = DiamondCloneMinimalLib._getFacetAddressForCall();
 
         // check if the facet address exists on the saw AND is included in our local cut
-        require(facet != address(0) && LibDiamondCloneMinimal.getDiamondCloneStorage().facetAddresses[facet], "Diamond: Function does not exist");
+        require(facet != address(0) && DiamondCloneMinimalLib.getDiamondCloneStorage().facetAddresses[facet], "Diamond: Function does not exist");
 
         // Execute external function from facet using delegatecall and return any value.
         assembly {

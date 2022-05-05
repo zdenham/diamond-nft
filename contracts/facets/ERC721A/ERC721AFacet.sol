@@ -155,7 +155,7 @@ contract ERC721AFacet is ERC165, IERC721, IERC721Metadata {
         address owner = ERC721AFacet.ownerOf(tokenId);
         if (to == owner) revert ApprovalToCurrentOwner();
 
-        if (_msgSender() != owner && !isApprovedForAll(owner, _msgSender())) {
+        if (msg.sender != owner && !isApprovedForAll(owner, msg.sender)) {
             revert ApprovalCallerNotOwnerNorApproved();
         }
 
@@ -175,10 +175,10 @@ contract ERC721AFacet is ERC165, IERC721, IERC721Metadata {
      * @dev See {IERC721-setApprovalForAll}.
      */
     function setApprovalForAll(address operator, bool approved) public virtual override {
-        if (operator == _msgSender()) revert ApproveToCaller();
+        if (operator == msg.sender) revert ApproveToCaller();
 
-        ERC721ALib.erc721AStorage()._operatorApprovals[_msgSender()][operator] = approved;
-        emit ApprovalForAll(_msgSender(), operator, approved);
+        ERC721ALib.erc721AStorage()._operatorApprovals[msg.sender][operator] = approved;
+        emit ApprovalForAll(msg.sender, operator, approved);
     }
 
     /**
@@ -220,7 +220,7 @@ contract ERC721AFacet is ERC165, IERC721, IERC721Metadata {
         bytes memory _data
     ) public virtual override {
         _transfer(from, to, tokenId);
-        if (to.isContract() && !_checkContractOnERC721Received(from, to, tokenId, _data)) {
+        if (to.isContract() && !ERC721ALib._checkContractOnERC721Received(from, to, tokenId, _data)) {
             revert TransferToNonERC721ReceiverImplementer();
         }
     }
@@ -259,7 +259,7 @@ contract ERC721AFacet is ERC165, IERC721, IERC721Metadata {
 
         if (prevOwnership.addr != from) revert TransferFromIncorrectOwner();
 
-        bool isApprovedOrOwner = (_msgSender() == from || isApprovedForAll(from, _msgSender()) || getApproved(tokenId) == _msgSender());
+        bool isApprovedOrOwner = (msg.sender == from || isApprovedForAll(from, msg.sender) || getApproved(tokenId) == msg.sender);
 
         if (!isApprovedOrOwner) revert TransferCallerNotOwnerNorApproved();
         if (to == address(0)) revert TransferToZeroAddress();
@@ -322,7 +322,7 @@ contract ERC721AFacet is ERC165, IERC721, IERC721Metadata {
         address from = prevOwnership.addr;
 
         if (approvalCheck) {
-            bool isApprovedOrOwner = (_msgSender() == from || isApprovedForAll(from, _msgSender()) || getApproved(tokenId) == _msgSender());
+            bool isApprovedOrOwner = (msg.sender == from || isApprovedForAll(from, msg.sender) || getApproved(tokenId) == msg.sender);
 
             if (!isApprovedOrOwner) revert TransferCallerNotOwnerNorApproved();
         }

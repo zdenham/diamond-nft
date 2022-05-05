@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../DiamondSaw.sol";
-import {IDiamondLoupe} from "../interfaces/IDiamondLoupe.sol";
+import "../../DiamondSaw.sol";
+import {IDiamondLoupe} from "./IDiamondLoupe.sol";
 
-library LibDiamondClone {
+library DiamondCloneLib {
     bytes32 constant DIAMOND_CLONE_STORAGE_POSITION = keccak256("diamond.standard.diamond.clone.storage");
 
     event DiamondCut(IDiamondCut.FacetCut[] _diamondCut, address _init, bytes _calldata);
@@ -33,7 +33,7 @@ library LibDiamondClone {
         address _init, // base facet address
         bytes calldata _calldata // appropriate call data
     ) internal {
-        LibDiamondClone.DiamondCloneStorage storage s = LibDiamondClone.getDiamondCloneStorage();
+        DiamondCloneLib.DiamondCloneStorage storage s = DiamondCloneLib.getDiamondCloneStorage();
 
         require(diamondSawAddress != address(0), "Must set saw addy");
         require(s.diamondSawAddress == address(0), "Already inited");
@@ -62,7 +62,7 @@ library LibDiamondClone {
                 // bubble up the error
                 revert(string(error));
             } else {
-                revert("LibDiamondClone: _init function reverted");
+                revert("DiamondCloneLib: _init function reverted");
             }
         }
     }
@@ -107,7 +107,7 @@ library LibDiamondClone {
                 // bubble up the error
                 revert(string(error));
             } else {
-                revert("LibDiamondClone: _init function reverted");
+                revert("DiamondCloneLib: _init function reverted");
             }
         }
     }
@@ -129,7 +129,7 @@ library LibDiamondClone {
      */
 
     function facets() internal view returns (IDiamondLoupe.Facet[] memory facets_) {
-        LibDiamondClone.DiamondCloneStorage storage ds = LibDiamondClone.getDiamondCloneStorage();
+        DiamondCloneLib.DiamondCloneStorage storage ds = DiamondCloneLib.getDiamondCloneStorage();
         IDiamondLoupe.Facet[] memory allSawFacets = DiamondSaw(ds.diamondSawAddress).allFacetsWithSelectors();
 
         uint256 copyIndex = 0;
@@ -151,7 +151,7 @@ library LibDiamondClone {
     }
 
     function facetAddresses() internal view returns (address[] memory facetAddresses_) {
-        LibDiamondClone.DiamondCloneStorage storage ds = LibDiamondClone.getDiamondCloneStorage();
+        DiamondCloneLib.DiamondCloneStorage storage ds = DiamondCloneLib.getDiamondCloneStorage();
 
         address[] memory allSawFacetAddresses = DiamondSaw(ds.diamondSawAddress).allFacetAddresses();
         facetAddresses_ = new address[](allSawFacetAddresses.length);

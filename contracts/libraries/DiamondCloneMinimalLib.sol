@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// minimal inline subset of the full LibDiamondClone to reduce deployment gas costs
-library LibDiamondCloneMinimal {
+// minimal inline subset of the full DiamondCloneLib to reduce deployment gas costs
+library DiamondCloneMinimalLib {
     bytes32 constant DIAMOND_CLONE_STORAGE_POSITION = keccak256("diamond.standard.diamond.clone.storage");
 
     struct DiamondCloneStorage {

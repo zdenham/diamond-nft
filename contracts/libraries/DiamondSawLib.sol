@@ -5,12 +5,12 @@ pragma solidity ^0.8.0;
 * Author: Nick Mudge <nick@perfectabstractions.com> (https://twitter.com/mudgen)
 * EIP-2535 Diamonds: https://eips.ethereum.org/EIPS/eip-2535
 /******************************************************************************/
-import {IDiamondCut} from "../interfaces/IDiamondCut.sol";
+import {IDiamondCut} from "../facets/DiamondClone/IDiamondCut.sol";
 
 // Remember to add the loupe functions from DiamondLoupeFacet to the diamond.
 // The loupe functions are required by the EIP2535 Diamonds standard
 
-library LibDiamondSaw {
+library DiamondSawLib {
     bytes32 constant DIAMOND_SAW_STORAGE_POSITION = keccak256("diamond.standard.diamond.saw.storage");
 
     struct FacetAddressAndPosition {
@@ -132,6 +132,6 @@ library LibDiamondSaw {
     }
 
     function checkFacetSupported(address _facetAddress) internal view {
-        require(LibDiamondSaw.diamondSawStorage().facetFunctionSelectors[_facetAddress].functionSelectors.length > 0, "Facet not supported");
+        require(diamondSawStorage().facetFunctionSelectors[_facetAddress].functionSelectors.length > 0, "Facet not supported");
     }
 }

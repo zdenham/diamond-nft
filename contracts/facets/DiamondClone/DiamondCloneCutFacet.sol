@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../libraries/LibDiamondClone.sol";
-import "../libraries/LibAccessControl.sol";
+import "./DiamondCloneLib.sol";
+import "../AccessControl/AccessControlLib.sol";
 
 // import "../utils/DiamondInitializable.sol";
 
@@ -16,7 +16,7 @@ contract DiamondCloneCutFacet is IDiamondCut {
         address _init, // base facet address
         bytes calldata _calldata // appropriate call data
     ) external {
-        LibDiamondClone.initialCutWithDiamondSaw(diamondSawAddress, facetAddresses, _init, _calldata);
+        DiamondCloneLib.initialCutWithDiamondSaw(diamondSawAddress, facetAddresses, _init, _calldata);
     }
 
     function diamondCut(
@@ -24,7 +24,7 @@ contract DiamondCloneCutFacet is IDiamondCut {
         address _init,
         bytes calldata _calldata
     ) external override {
-        LibAccessControl._enforceOwner();
-        LibDiamondClone.cutWithDiamondSaw(_diamondCut, _init, _calldata);
+        AccessControlLib._enforceOwner();
+        DiamondCloneLib.cutWithDiamondSaw(_diamondCut, _init, _calldata);
     }
 }

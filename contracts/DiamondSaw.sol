@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import {IDiamondCut} from "./interfaces/IDiamondCut.sol";
-import {IDiamondLoupe} from "./interfaces/IDiamondLoupe.sol";
+import {IDiamondCut} from "./facets/DiamondClone/IDiamondCut.sol";
+import {IDiamondLoupe} from "./facets/DiamondClone/IDiamondLoupe.sol";
 
-import {LibDiamondSaw} from "./libraries/LibDiamondSaw.sol";
+import {DiamondSawLib} from "./libraries/DiamondSawLib.sol";
 
 /**
  * DiamondSaw is meant to be used as a
@@ -33,28 +33,28 @@ contract DiamondSaw {
         address _init,
         bytes calldata _calldata
     ) public {
-        LibDiamondSaw.diamondCutAddOnly(_facetAdds, _init, _calldata);
+        DiamondSawLib.diamondCutAddOnly(_facetAdds, _init, _calldata);
     }
 
     // if a facet has no selectors, it is not supported
     function checkFacetSupported(address _facetAddress) external view {
-        LibDiamondSaw.checkFacetSupported(_facetAddress);
+        DiamondSawLib.checkFacetSupported(_facetAddress);
     }
 
     function facetAddressForSelector(bytes4 selector) external view returns (address) {
-        return LibDiamondSaw.diamondSawStorage().selectorToFacetAndPosition[selector].facetAddress;
+        return DiamondSawLib.diamondSawStorage().selectorToFacetAndPosition[selector].facetAddress;
     }
 
     function functionSelectorsForFacetAddress(address facetAddress) external view returns (bytes4[] memory) {
-        return LibDiamondSaw.diamondSawStorage().facetFunctionSelectors[facetAddress].functionSelectors;
+        return DiamondSawLib.diamondSawStorage().facetFunctionSelectors[facetAddress].functionSelectors;
     }
 
     function allFacetAddresses() external view returns (address[] memory) {
-        return LibDiamondSaw.diamondSawStorage().facetAddresses;
+        return DiamondSawLib.diamondSawStorage().facetAddresses;
     }
 
     function allFacetsWithSelectors() external view returns (IDiamondLoupe.Facet[] memory _facetsWithSelectors) {
-        LibDiamondSaw.DiamondSawStorage storage ds = LibDiamondSaw.diamondSawStorage();
+        DiamondSawLib.DiamondSawStorage storage ds = DiamondSawLib.diamondSawStorage();
 
         uint256 numFacets = ds.facetAddresses.length;
         _facetsWithSelectors = new IDiamondLoupe.Facet[](numFacets);
@@ -66,7 +66,7 @@ contract DiamondSaw {
     }
 
     function facetAddressForInterface(bytes4 _interface) external view returns (address) {
-        LibDiamondSaw.DiamondSawStorage storage ds = LibDiamondSaw.diamondSawStorage();
+        DiamondSawLib.DiamondSawStorage storage ds = DiamondSawLib.diamondSawStorage();
         return ds.interfaceToFacet[_interface];
     }
 }

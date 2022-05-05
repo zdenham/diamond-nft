@@ -42,6 +42,4 @@ describe('DiamondTest', async function () {
   it('should emit an initial DiamondCut event', async () => {
     // TODO!
   })
-
-  it('should remove ')
 })
