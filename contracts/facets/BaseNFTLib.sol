@@ -13,7 +13,7 @@ library BaseNFTLib {
     }
 
     function baseNFTStorage() internal pure returns (BaseNFTStorage storage es) {
-        bytes32 position = keccak256("erc721a.facet.storage");
+        bytes32 position = keccak256("base.nft.storage");
         assembly {
             es.slot := position
         }
@@ -39,7 +39,7 @@ library BaseNFTLib {
     }
 
     function _safeMint(address to, uint256 quantity) internal {
-        require(baseNFTStorage().maxSupply > ERC721ALib.totalSupply() + quantity, "Mint exceeds max supply");
+        require(baseNFTStorage().maxSupply > (ERC721ALib.totalSupply() + quantity), "Mint exceeds max supply");
         ERC721ALib._safeMint(to, quantity);
     }
 

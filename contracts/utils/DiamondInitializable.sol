@@ -6,6 +6,14 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
 /**
+ * Author: Zac Denham
+ *
+ * This is a modification of Open Zeppelin's Initializable Util
+ * that works with diamond storage, you must pass a unique string to the
+ * modifier to avoid storage conflicts across contracts
+ *
+ * Usage: function yourInitializer() public initializer("super.unique.string") {}
+ *
  * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed
  * behind a proxy. Since proxied contracts do not make use of a constructor, it's common to move constructor logic to an
  * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer

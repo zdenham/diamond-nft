@@ -34,7 +34,7 @@ async function deployDiamond () {
   // deploy Diamond Clone
   const DiamondClone = await ethers.getContractFactory('DiamondClone');
 
-  let functionCall = baseNFTFacet.interface.encodeFunctionData('init', ["Blah", "Blah"]);
+  let functionCall = baseNFTFacet.interface.encodeFunctionData('init', ["Blah", "Blah", 10000]);
 
   const diamondClone = await DiamondClone.deploy(diamondSaw.address, [baseNFTFacet.address], baseNFTFacet.address, functionCall);
   await diamondClone.deployed();

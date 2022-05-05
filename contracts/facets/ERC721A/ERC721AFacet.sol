@@ -2,9 +2,6 @@
 
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./ERC721ALib.sol";
 
 /**
@@ -17,7 +14,7 @@ import "./ERC721ALib.sol";
  *
  * Assumes that the maximum token id cannot exceed 2**256 - 1 (max value of uint256).
  */
-contract ERC721AFacet is ERC165, IERC721, IERC721Metadata {
+abstract contract ERC721AFacet is IERC721Metadata {
     using Address for address;
     using Strings for uint256;
 
