@@ -24,7 +24,7 @@ contract BaseNFTFacet is DiamondCloneCutFacet, DiamondCloneLoupeFacet, ERC721AFa
         ERC721ALib.ERC721AStorage storage s = ERC721ALib.erc721AStorage();
 
         require(bytes(_symbol).length > 0, "Blank symbol");
-        require(bytes(s._symbol).length == 0, "Already init");
+        require(bytes(s._symbol).length == 0, "Already initted");
 
         BaseNFTLib.setMaxSupply(_maxSupply);
         AccessControlLib._transferOwnership(msg.sender);
