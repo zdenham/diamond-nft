@@ -56,6 +56,7 @@ library DiamondSawLib {
     ) internal {
         for (uint256 facetIndex; facetIndex < _diamondCut.length; facetIndex++) {
             require(_diamondCut[facetIndex].action == IDiamondCut.FacetCutAction.Add, "Only add action supported in saw");
+            require(!isFacetSupported(_diamondCut[facetIndex].facetAddress), "Facet already exists in saw");
             addFunctions(_diamondCut[facetIndex].facetAddress, _diamondCut[facetIndex].functionSelectors);
         }
         emit DiamondCut(_diamondCut, _init, _calldata);
@@ -75,7 +76,7 @@ library DiamondSawLib {
             bytes4 selector = _functionSelectors[selectorIndex];
             address oldFacetAddress = ds.selectorToFacetAndPosition[selector].facetAddress;
 
-            require(oldFacetAddress == address(0), "LibDiamondCut: Can't add function that already exists");
+            require(oldFacetAddress == address(0), "Cannot add function that already exists");
             addFunction(ds, selector, selectorPosition, _facetAddress);
             selectorPosition++;
         }
@@ -132,7 +133,11 @@ library DiamondSawLib {
         ds.interfaceToFacet[_interface] = _facetAddress;
     }
 
+    function isFacetSupported(address _facetAddress) internal view returns (bool) {
+        return diamondSawStorage().facetFunctionSelectors[_facetAddress].functionSelectors.length > 0;
+    }
+
     function checkFacetSupported(address _facetAddress) internal view {
-        require(diamondSawStorage().facetFunctionSelectors[_facetAddress].functionSelectors.length > 0, "Facet not supported");
+        require(isFacetSupported(_facetAddress), "Facet not supported");
     }
 }

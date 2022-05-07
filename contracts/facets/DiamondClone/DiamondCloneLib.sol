@@ -45,7 +45,7 @@ library DiamondCloneLib {
         for (uint256 i; i < _facetAddresses.length; i++) {
             address facetAddress = _facetAddresses[i];
             bytes4[] memory selectors = DiamondSaw(diamondSawAddress).functionSelectorsForFacetAddress(facetAddress);
-            require(selectors.length > 0, "Facet is not supported!!!");
+            require(selectors.length > 0, "Facet is not supported by the saw");
             cuts[i].facetAddress = _facetAddresses[i];
             cuts[i].functionSelectors = selectors;
             s.facetAddresses[facetAddress] = true;
@@ -78,7 +78,7 @@ library DiamondCloneLib {
             IDiamondCut.FacetCut memory cut = _diamondCut[i];
             bytes4[] memory selectors = DiamondSaw(s.diamondSawAddress).functionSelectorsForFacetAddress(cut.facetAddress);
 
-            require(selectors.length > 0, "Facet is not supported!!!");
+            require(selectors.length > 0, "Facet is not supported by the saw");
             require(selectors.length == cut.functionSelectors.length, "You can only modify all selectors at once with diamond saw");
 
             // NOTE we override the passed selectors after validating the length matches

@@ -32,7 +32,7 @@ contract DiamondSaw {
         IDiamondCut.FacetCut[] calldata _facetAdds,
         address _init,
         bytes calldata _calldata
-    ) public {
+    ) external {
         DiamondSawLib.diamondCutAddOnly(_facetAdds, _init, _calldata);
     }
 
@@ -68,5 +68,10 @@ contract DiamondSaw {
     function facetAddressForInterface(bytes4 _interface) external view returns (address) {
         DiamondSawLib.DiamondSawStorage storage ds = DiamondSawLib.diamondSawStorage();
         return ds.interfaceToFacet[_interface];
+    }
+
+    function setFacetForInterface(bytes4 _interface, address _facet) external {
+        DiamondSawLib.checkFacetSupported(_facet);
+        DiamondSawLib.diamondSawStorage().interfaceToFacet[_interface] = _facet;
     }
 }
