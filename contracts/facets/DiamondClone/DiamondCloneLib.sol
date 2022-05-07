@@ -45,9 +45,7 @@ library DiamondCloneLib {
         for (uint256 i; i < _facetAddresses.length; i++) {
             address facetAddress = _facetAddresses[i];
             bytes4[] memory selectors = DiamondSaw(diamondSawAddress).functionSelectorsForFacetAddress(facetAddress);
-
             require(selectors.length > 0, "Facet is not supported!!!");
-
             cuts[i].facetAddress = _facetAddresses[i];
             cuts[i].functionSelectors = selectors;
             s.facetAddresses[facetAddress] = true;
@@ -56,11 +54,12 @@ library DiamondCloneLib {
         emit DiamondCut(cuts, _init, _calldata);
 
         // call the init function
-        (bool success, bytes memory error) = _init.delegatecall(_calldata);
+        (bool success, bytes memory err) = _init.delegatecall(_calldata);
+
         if (!success) {
-            if (error.length > 0) {
+            if (err.length > 0) {
                 // bubble up the error
-                revert(string(error));
+                revert(string(err));
             } else {
                 revert("DiamondCloneLib: _init function reverted");
             }

@@ -22,7 +22,7 @@ async function deployDiamond() {
   const diamondSaw = await DiamondSaw.deploy();
   await diamondSaw.deployed();
 
-  // add the ERC721A facet pattern to the SAW
+  // add the BaseNFT facet pattern to the SAW
   const add = [
     {
       facetAddress: baseNFTFacet.address,
@@ -50,13 +50,11 @@ async function deployDiamond() {
   );
   await diamondClone.deployed();
 
-  console.log("Diamond deployed:", diamondClone.address);
-
   return {
     diamondAddress: diamondClone.address,
     initCallData: functionCall,
     sawInstance: diamondSaw,
-    baseNFTFacet: baseNFTFacet,
+    baseNFTFacetImplementation: baseNFTFacet,
   };
 }
 

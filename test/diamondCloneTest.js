@@ -1,8 +1,6 @@
 const {
   getSelectors,
   FacetCutAction,
-  removeSelectors,
-  findAddressPositionInFacets,
 } = require("../scripts/libraries/diamond.js");
 require("@nomiclabs/hardhat-waffle");
 
@@ -49,17 +47,17 @@ describe("DiamondTest", async function () {
   let diamondAddress,
     initCallData,
     sawInstance,
-    baseNFTFacet,
+    baseNFTFacetImplementation,
     baseNFTFacetInstance,
     contractOwner,
     accounts;
 
-  before(async function () {
+  beforeEach(async function () {
     const data = await deployDiamond();
     diamondAddress = data.diamondAddress;
     initCallData = data.initCallData;
     sawInstance = data.sawInstance;
-    baseNFTFacet = data.baseNFTFacet;
+    baseNFTFacetImplementation = data.baseNFTFacetImplementation;
     baseNFTFacetInstance = await ethers.getContractAt(
       "BaseNFTFacet",
       diamondAddress
@@ -96,12 +94,12 @@ describe("DiamondTest", async function () {
     const addAction = 0;
 
     expect(cut.length).to.equal(1);
-    expect(cut[0].facetAddress).to.equal(baseNFTFacet.address);
+    expect(cut[0].facetAddress).to.equal(baseNFTFacetImplementation.address);
     expect(cut[0].action).to.equal(addAction);
     expect(cut[0].functionSelectors).to.have.same.members(
       getSelectors(baseNFTFacetInstance)
     );
-    expect(args[1]).to.equal(baseNFTFacet.address);
+    expect(args[1]).to.equal(baseNFTFacetImplementation.address);
     expect(args[2]).to.equal(initCallData);
   });
 
@@ -113,6 +111,8 @@ describe("DiamondTest", async function () {
       action: FacetCutAction.Add,
       functionSelectors: selectors,
     };
+
+    const facets = await sawInstance.allFacetAddresses();
 
     // add the pattern to the saw
     await sawInstance.addFacetPattern(
@@ -152,16 +152,16 @@ describe("DiamondTest", async function () {
 
   it("Should not allow blank symbols", async () => {
     const DiamondClone = await ethers.getContractFactory("DiamondClone");
-    let functionCall = baseNFTFacet.interface.encodeFunctionData("init", [
-      "Blah",
-      "",
-      10000,
-    ]);
-    expect(
-      await DiamondClone.deploy(
+    let functionCall = baseNFTFacetImplementation.interface.encodeFunctionData(
+      "init",
+      ["Blah", "", 10000]
+    );
+
+    await expect(
+      DiamondClone.deploy(
         sawInstance.address,
-        [baseNFTFacet.address],
-        baseNFTFacet.address,
+        [baseNFTFacetImplementation.address],
+        baseNFTFacetImplementation.address,
         functionCall
       )
     ).to.be.revertedWith("Blank symbol");
@@ -170,6 +170,7 @@ describe("DiamondTest", async function () {
   it("Should reject non-additive cuts in the diamond saw", async () => {
     const test1facet = await deployTest1Facet();
     const selectors = getSelectors(test1facet);
+
     const newCut = {
       facetAddress: test1facet.address,
       action: FacetCutAction.Add,
@@ -219,7 +220,7 @@ describe("DiamondTest", async function () {
 
     await expect(
       baseNFTFacetInstance.diamondCut(
-        [{ ...newCut, functionSelectors: functionSelectors.slice(0, 5) }],
+        [{ ...newCut, functionSelectors: selectors.slice(0, 5) }],
         ethers.constants.AddressZero,
         "0x",
         { gasLimit: 800000 }
