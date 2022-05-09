@@ -4,6 +4,11 @@ pragma solidity ^0.8.4;
 
 import {BaseNFTLib} from "./BaseNFTLib.sol";
 
+// sale states
+// 0 - closed
+// 1 - public sale
+// 2 - allow list sale
+
 abstract contract SaleStateModifiers {
     modifier onlyAtSaleState(uint256 _gatedSaleState) {
         require(_gatedSaleState == BaseNFTLib.saleState(), "Cannot make call with current sale state");
