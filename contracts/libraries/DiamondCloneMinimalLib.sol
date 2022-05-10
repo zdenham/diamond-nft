@@ -14,7 +14,7 @@ library DiamondCloneMinimalLib {
         mapping(bytes4 => address) selectorGasCache;
     }
 
-    function getDiamondCloneStorage() internal pure returns (DiamondCloneStorage storage s) {
+    function diamondCloneStorage() internal pure returns (DiamondCloneStorage storage s) {
         bytes32 position = DIAMOND_CLONE_STORAGE_POSITION;
         assembly {
             s.slot := position
@@ -23,7 +23,7 @@ library DiamondCloneMinimalLib {
 
     // calls externally to the saw to find the appropriate facet to delegate to
     function _getFacetAddressForCall() internal returns (address addr) {
-        (bool success, bytes memory res) = getDiamondCloneStorage().diamondSawAddress.call(
+        (bool success, bytes memory res) = diamondCloneStorage().diamondSawAddress.call(
             abi.encodeWithSignature("facetAddressForSelector(bytes4)", msg.sig)
         );
         require(success, "Failed to fetch facet address for call");

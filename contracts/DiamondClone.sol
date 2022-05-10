@@ -29,7 +29,7 @@ contract DiamondClone {
         address facet = DiamondCloneMinimalLib._getFacetAddressForCall();
 
         // check if the facet address exists on the saw AND is included in our local cut
-        require(facet != address(0) && DiamondCloneMinimalLib.getDiamondCloneStorage().facetAddresses[facet], "Diamond: Function does not exist");
+        require(facet != address(0) && DiamondCloneMinimalLib.diamondCloneStorage().facetAddresses[facet], "Diamond: Function does not exist");
 
         // Execute external function from facet using delegatecall and return any value.
         assembly {

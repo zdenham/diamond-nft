@@ -30,7 +30,7 @@ contract DiamondCloneLoupeFacet is IDiamondLoupe, IERC165 {
     /// @param _facet The facet address.
     /// @return facetFunctionSelectors_
     function facetFunctionSelectors(address _facet) external view override returns (bytes4[] memory facetFunctionSelectors_) {
-        DiamondCloneLib.DiamondCloneStorage storage ds = DiamondCloneLib.getDiamondCloneStorage();
+        DiamondCloneLib.DiamondCloneStorage storage ds = DiamondCloneLib.diamondCloneStorage();
         facetFunctionSelectors_ = DiamondSaw(ds.diamondSawAddress).functionSelectorsForFacetAddress(_facet);
     }
 
@@ -45,7 +45,7 @@ contract DiamondCloneLoupeFacet is IDiamondLoupe, IERC165 {
     /// @param _functionSelector The function selector.
     /// @return facetAddress_ The facet address.
     function facetAddress(bytes4 _functionSelector) external view override returns (address facetAddress_) {
-        DiamondCloneLib.DiamondCloneStorage storage ds = DiamondCloneLib.getDiamondCloneStorage();
+        DiamondCloneLib.DiamondCloneStorage storage ds = DiamondCloneLib.diamondCloneStorage();
         facetAddress_ = DiamondSaw(ds.diamondSawAddress).facetAddressForSelector(_functionSelector);
     }
 
@@ -53,7 +53,7 @@ contract DiamondCloneLoupeFacet is IDiamondLoupe, IERC165 {
     // DiamondSaw maintains a map of which facet addresses implement which interfaces
     // All the clone has to do is query the facet address and check if the clone implements it
     function supportsInterface(bytes4 _interfaceId) external view override returns (bool) {
-        DiamondCloneLib.DiamondCloneStorage storage ds = DiamondCloneLib.getDiamondCloneStorage();
+        DiamondCloneLib.DiamondCloneStorage storage ds = DiamondCloneLib.diamondCloneStorage();
         address facetAddressForInterface = DiamondSaw(ds.diamondSawAddress).facetAddressForInterface(_interfaceId);
 
         return ds.facetAddresses[facetAddressForInterface];

@@ -12,7 +12,7 @@ contract RoyaltyStandardFacet is IERC2981, AccessControlModifiers {
         return RoyaltyStandardLib.royaltyInfo(tokenId, salePrice);
     }
 
-    function setDefaultRoyalty(address receiver, uint96 feeNumerator) external onlyOwner {
-        RoyaltyStandardLib._setDefaultRoyalty(receiver, feeNumerator);
+    function setDefaultRoyalty(uint96 feeNumerator) external onlyOwner {
+        RoyaltyStandardLib._setDefaultRoyalty(feeNumerator);
     }
 }

@@ -20,7 +20,7 @@ library DiamondCloneLib {
         address[] optionalFacetAddressGasCache;
     }
 
-    function getDiamondCloneStorage() internal pure returns (DiamondCloneStorage storage s) {
+    function diamondCloneStorage() internal pure returns (DiamondCloneStorage storage s) {
         bytes32 position = DIAMOND_CLONE_STORAGE_POSITION;
         assembly {
             s.slot := position
@@ -33,7 +33,7 @@ library DiamondCloneLib {
         address _init, // base facet address
         bytes calldata _calldata // appropriate call data
     ) internal {
-        DiamondCloneLib.DiamondCloneStorage storage s = DiamondCloneLib.getDiamondCloneStorage();
+        DiamondCloneLib.DiamondCloneStorage storage s = DiamondCloneLib.diamondCloneStorage();
 
         require(diamondSawAddress != address(0), "Must set saw addy");
         require(s.diamondSawAddress == address(0), "Already inited");
@@ -71,7 +71,7 @@ library DiamondCloneLib {
         address _init,
         bytes calldata _calldata
     ) internal {
-        DiamondCloneStorage storage s = getDiamondCloneStorage();
+        DiamondCloneStorage storage s = diamondCloneStorage();
 
         // emit the diamond cut event
         for (uint256 i; i < _diamondCut.length; i++) {
@@ -113,7 +113,7 @@ library DiamondCloneLib {
 
     // calls externally to the saw to find the appropriate facet to delegate to
     function _getFacetAddressForCall() internal returns (address addr) {
-        (bool success, bytes memory res) = getDiamondCloneStorage().diamondSawAddress.call(
+        (bool success, bytes memory res) = diamondCloneStorage().diamondSawAddress.call(
             abi.encodeWithSignature("facetAddressForSelector(bytes4)", msg.sig)
         );
         require(success, "Failed to fetch facet address for call");
@@ -128,7 +128,7 @@ library DiamondCloneLib {
      */
 
     function facets() internal view returns (IDiamondLoupe.Facet[] memory facets_) {
-        DiamondCloneLib.DiamondCloneStorage storage ds = DiamondCloneLib.getDiamondCloneStorage();
+        DiamondCloneLib.DiamondCloneStorage storage ds = DiamondCloneLib.diamondCloneStorage();
         IDiamondLoupe.Facet[] memory allSawFacets = DiamondSaw(ds.diamondSawAddress).allFacetsWithSelectors();
 
         uint256 copyIndex = 0;
@@ -150,7 +150,7 @@ library DiamondCloneLib {
     }
 
     function facetAddresses() internal view returns (address[] memory facetAddresses_) {
-        DiamondCloneLib.DiamondCloneStorage storage ds = DiamondCloneLib.getDiamondCloneStorage();
+        DiamondCloneLib.DiamondCloneStorage storage ds = DiamondCloneLib.diamondCloneStorage();
 
         address[] memory allSawFacetAddresses = DiamondSaw(ds.diamondSawAddress).allFacetAddresses();
         facetAddresses_ = new address[](allSawFacetAddresses.length);

@@ -1,30 +1,61 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {DiamondCloneLib} from "../DiamondClone/DiamondCloneLib.sol";
+
 uint256 constant BASIS = 10000;
 
 library PaymentSplitterLib {
     struct SplitInfo {
         uint256 basisPoints;
-        address splitAddress;
+        address payable splitAddress;
     }
 
     struct PaymentSplitterStorage {
         SplitInfo[] splits;
     }
 
-    function paymentSplitterStorage() {}
+    function paymentSplitterStorage() internal pure returns (PaymentSplitterStorage storage es) {
+        bytes32 position = keccak256("payment.splitter.facet.storage");
+        assembly {
+            es.slot := position
+        }
+    }
+
+    function paymentSplitterInfo() internal view returns (SplitInfo[] memory) {
+        return paymentSplitterStorage().splits;
+    }
+
+    function setPaymentSplits(SplitInfo[] memory splits) internal {
+        require(splits.length > 0, "Must provide split information");
+        PaymentSplitterStorage storage s = paymentSplitterStorage();
+
+        if (s.splits.length > 0) {
+            require(
+                s.splits[0].basisPoints == splits[0].basisPoints && s.splits[0].splitAddress == splits[0].splitAddress,
+                "Cannot modify first split"
+            );
+        }
+
+        uint256 total;
+        for (uint256 i; i < splits.length; i++) {
+            require(splits[i].splitAddress != address(0), "Cannot set payment split to null address");
+            total += splits[i].basisPoints;
+        }
+
+        require(total == BASIS, "payment split does not add up to basis");
+
+        paymentSplitterStorage().splits = splits;
+    }
 
     function withdraw() internal {
+        PaymentSplitterStorage storage s = paymentSplitterStorage();
         uint256 balance = address(this).balance;
 
-        // for(let)
-        uint256 devPayment = (balance * _devShare) / BASIS;
-        uint256 remainder = balance - devPayment;
-
-        (bool success, ) = _devWallet.call{value: devPayment}("");
-        (bool success2, ) = _wallet.call{value: remainder}("");
-
-        require(success && success2, "Smokers: withdrawl failed");
+        for (uint256 i; i < s.splits.length; i++) {
+            uint256 payment = (balance * s.splits[i].basisPoints) / BASIS;
+            (bool success, ) = s.splits[i].splitAddress.call{value: payment}("");
+            require(success, "Payment failed!");
+        }
     }
 }

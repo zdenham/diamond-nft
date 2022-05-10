@@ -64,14 +64,13 @@ library RoyaltyStandardLib {
      *
      * Requirements:
      *
-     * - `receiver` cannot be the zero address.
      * - `feeNumerator` cannot be greater than the fee denominator.
+     * - receiver is always the contract address where payment splitting is implemented
      */
-    function _setDefaultRoyalty(address receiver, uint96 feeNumerator) internal {
+    function _setDefaultRoyalty(uint96 feeNumerator) internal {
         require(feeNumerator <= _feeDenominator(), "ERC2981: royalty fee will exceed salePrice");
-        require(receiver != address(0), "ERC2981: invalid receiver");
 
-        royaltyStandardStorage()._defaultRoyaltyInfo = RoyaltyInfo(receiver, feeNumerator);
+        royaltyStandardStorage()._defaultRoyaltyInfo = RoyaltyInfo(address(this), feeNumerator);
     }
 
     /**
