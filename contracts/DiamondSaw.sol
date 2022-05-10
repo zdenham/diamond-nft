@@ -5,8 +5,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import {IDiamondCut} from "./facets/DiamondClone/IDiamondCut.sol";
 import {IDiamondLoupe} from "./facets/DiamondClone/IDiamondLoupe.sol";
-
 import {DiamondSawLib} from "./libraries/DiamondSawLib.sol";
+import {AccessControlFacet} from "./facets/AccessControl/AccessControlFacet.sol";
+import {AccessControlModifiers} from "./facets/AccessControl/AccessControlModifiers.sol";
+import {AccessControlLib} from "./facets/AccessControl/AccessControlLib.sol";
 
 /**
  * DiamondSaw is meant to be used as a
@@ -27,12 +29,16 @@ import {DiamondSawLib} from "./libraries/DiamondSawLib.sol";
  * to communicate with the singleton (saw) to fetch selectors
  *
  */
-contract DiamondSaw {
+contract DiamondSaw is AccessControlFacet, AccessControlModifiers {
+    constructor() {
+        AccessControlLib._transferOwnership(msg.sender);
+    }
+
     function addFacetPattern(
         IDiamondCut.FacetCut[] calldata _facetAdds,
         address _init,
         bytes calldata _calldata
-    ) external {
+    ) external onlyAdmin {
         DiamondSawLib.diamondCutAddOnly(_facetAdds, _init, _calldata);
     }
 
@@ -70,7 +76,7 @@ contract DiamondSaw {
         return ds.interfaceToFacet[_interface];
     }
 
-    function setFacetForInterface(bytes4 _interface, address _facet) external {
+    function setFacetForInterface(bytes4 _interface, address _facet) external onlyOwner {
         DiamondSawLib.checkFacetSupported(_facet);
         DiamondSawLib.diamondSawStorage().interfaceToFacet[_interface] = _facet;
     }

@@ -9,13 +9,22 @@ import {AccessControlModifiers} from "./AccessControl/AccessControlModifiers.sol
 import {AccessControlLib} from "./AccessControl/AccessControlLib.sol";
 import {DiamondCloneCutFacet} from "./DiamondClone/DiamondCloneCutFacet.sol";
 import {DiamondCloneLoupeFacet} from "./DiamondClone/DiamondCloneLoupeFacet.sol";
+import {RoyaltyStandardFacet} from "./RoyaltyStandard/RoyaltyStandardFacet.sol";
 import {BaseNFTLib} from "./BaseNFTLib.sol";
 import {SaleStateModifiers} from "./BaseNFTModifiers.sol";
 
 // Inherit from other facets in the BaseNFTFacet
 // Why inherit to one facet instead of deploying Each Facet Separately?
 // Because its cheaper for end customers to just store / cut one facet address
-contract BaseNFTFacet is DiamondCloneCutFacet, DiamondCloneLoupeFacet, ERC721AFacet, SaleStateModifiers, AccessControlModifiers {
+contract BaseNFTFacet is
+    SaleStateModifiers,
+    AccessControlModifiers,
+    AccessControlFacet,
+    DiamondCloneCutFacet,
+    DiamondCloneLoupeFacet,
+    ERC721AFacet,
+    RoyaltyStandardFacet
+{
     function init(
         string memory _name,
         string memory _symbol,
