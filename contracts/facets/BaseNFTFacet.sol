@@ -3,7 +3,7 @@
 pragma solidity ^0.8.4;
 
 import {ERC721AFacet} from "./ERC721A/ERC721AFacet.sol";
-import {ERC721ALib} from "./ERC721A/ERC721ALib.sol";
+import {ERC721ALib, Strings} from "./ERC721A/ERC721ALib.sol";
 import {AccessControlFacet} from "./AccessControl/AccessControlFacet.sol";
 import {AccessControlModifiers} from "./AccessControl/AccessControlModifiers.sol";
 import {AccessControlLib} from "./AccessControl/AccessControlLib.sol";
@@ -12,6 +12,7 @@ import {DiamondCloneLoupeFacet} from "./DiamondClone/DiamondCloneLoupeFacet.sol"
 import {RoyaltyStandardFacet} from "./RoyaltyStandard/RoyaltyStandardFacet.sol";
 import {BaseNFTLib} from "./BaseNFTLib.sol";
 import {SaleStateModifiers} from "./BaseNFTModifiers.sol";
+import {URIStorageLib} from "./URIStorage/URIStorageLib.sol";
 
 // Inherit from other facets in the BaseNFTFacet
 // Why inherit to one facet instead of deploying Each Facet Separately?
@@ -25,6 +26,8 @@ contract BaseNFTFacet is
     ERC721AFacet,
     RoyaltyStandardFacet
 {
+    using Strings for uint256;
+
     function init(
         string memory _name,
         string memory _symbol,
@@ -73,5 +76,23 @@ contract BaseNFTFacet is
 
     function setSaleState(uint256 _saleState) public onlyAdmin {
         BaseNFTLib.setSaleState(_saleState);
+    }
+
+    function setBaseURI(string memory _baseURI) public onlyOwner {
+        BaseNFTLib.setBaseURI(_baseURI);
+    }
+
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        if (!_exists(tokenId)) revert("Cannot Query tokenURI for non-existant tokenId");
+
+        string storage tokenURIFromStorage = URIStorageLib.tokenURIFromStorage(tokenId);
+        string storage baseURI = BaseNFTLib.baseNFTStorage().baseURI;
+
+        // check first for URIStorage
+        // then fall back on baseURI + tokenId
+        return
+            bytes(tokenURIFromStorage).length != 0 ? tokenURIFromStorage : bytes(baseURI).length != 0
+                ? string(abi.encodePacked(baseURI, tokenId.toString()))
+                : "";
     }
 }

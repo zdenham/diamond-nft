@@ -10,6 +10,7 @@ library BaseNFTLib {
         bool maxSupplyLocked;
         uint256 mintPrice;
         uint256 saleState;
+        string baseURI;
     }
 
     function baseNFTStorage() internal pure returns (BaseNFTStorage storage es) {
@@ -49,5 +50,9 @@ library BaseNFTLib {
 
     function setSaleState(uint256 _saleState) internal {
         baseNFTStorage().saleState = _saleState;
+    }
+
+    function setBaseURI(string memory _baseURI) internal {
+        baseNFTStorage().baseURI = _baseURI;
     }
 }
