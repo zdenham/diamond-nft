@@ -28,21 +28,21 @@ contract BaseNFTFacet is
 {
     using Strings for uint256;
 
-    function init(
-        string memory _name,
-        string memory _symbol,
-        uint256 _maxSupply
-    ) external {
+    function init() external {
         ERC721ALib.ERC721AStorage storage s = ERC721ALib.erc721AStorage();
+        require(s._currentIndex == 0, "Already initialized");
 
-        require(bytes(_symbol).length > 0, "Blank symbol");
-        require(bytes(s._symbol).length == 0, "Already initted");
-
-        BaseNFTLib.setMaxSupply(_maxSupply);
         AccessControlLib._transferOwnership(msg.sender);
+        s._currentIndex = 1;
+    }
+
+    function setTokenMeta(string memory _name, string memory _symbol) external onlyOwner {
+        require(bytes(_name).length > 0, "Cannot set blank name");
+        require(bytes(_symbol).length > 0, "Cannot set blank symbol");
+        ERC721ALib.ERC721AStorage storage s = ERC721ALib.erc721AStorage();
+        require(bytes(s._name).length == 0, "Token meta already set");
         s._name = _name;
         s._symbol = _symbol;
-        s._currentIndex = 1;
     }
 
     function setMaxSupply(uint256 _maxSupply) public onlyAdmin {

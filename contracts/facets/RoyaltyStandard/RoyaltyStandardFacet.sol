@@ -8,7 +8,7 @@ import {AccessControlModifiers} from "../AccessControl/AccessControlModifiers.so
 import {RoyaltyStandardLib} from "./RoyaltyStandardLib.sol";
 
 contract RoyaltyStandardFacet is IERC2981, AccessControlModifiers {
-    function royaltyInfo(uint256 tokenId, uint256 salePrice) external view returns (address, uint256) {
+    function royaltyInfo(uint256 tokenId, uint256 salePrice) external view override returns (address, uint256) {
         return RoyaltyStandardLib.royaltyInfo(tokenId, salePrice);
     }
 

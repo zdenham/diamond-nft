@@ -14,6 +14,6 @@ contract PaymentSplitterFacet is AccessControlModifiers {
     }
 
     function paymentSplitterInfo() public view returns (PaymentSplitterLib.SplitInfo[] memory) {
-        PaymentSplitterLib.paymentSplitterInfo();
+        return PaymentSplitterLib.paymentSplitterInfo();
     }
 }

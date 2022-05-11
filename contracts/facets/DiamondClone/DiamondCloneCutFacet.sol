@@ -32,19 +32,21 @@ contract DiamondCloneCutFacet is IDiamondCut, AccessControlModifiers {
         DiamondCloneLib.setGasCacheForSelector(selector);
     }
 
-    function setImmutableUntil(uint256 timestampSeconds) external onlyOwner {
-        DiamondCloneLib.setImmutableUntil(timestampSeconds);
+    function setImmutableUntilBlock(uint256 blockNumber) external onlyOwner {
+        require(!DiamondCloneLib.isImmutable(), "Cannot cut the diamond while immutable");
+        DiamondCloneLib.setImmutableUntilBlock(blockNumber);
     }
 
-    function immutableUntilTimestamp() internal view returns (uint256) {
-        return DiamondCloneLib.immutableUntilTimestamp();
+    function immutableUntilBlock() internal view returns (uint256) {
+        return DiamondCloneLib.immutableUntilBlock();
     }
 
     function upgradeDiamondSaw(
-        FacetCut[] calldata _diamondCut,
+        address[] calldata _oldFacetAddresses,
+        address[] calldata _newFacetAddresses,
         address _init,
         bytes calldata _calldata
     ) external onlyOwner {
-        DiamondCloneLib.upgradeDiamondSaw();
+        DiamondCloneLib.upgradeDiamondSaw(_oldFacetAddresses, _newFacetAddresses, _init, _calldata);
     }
 }

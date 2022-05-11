@@ -19,7 +19,7 @@ library DiamondCloneLib {
         // optional gas cache for highly trafficked write selectors
         mapping(bytes4 => address) selectorGasCache;
         // immutability window
-        uint256 immutableUntilTimestamp;
+        uint256 immutableUntilBlock;
     }
 
     function diamondCloneStorage() internal pure returns (DiamondCloneStorage storage s) {
@@ -215,16 +215,16 @@ library DiamondCloneLib {
         s.selectorGasCache[selector] = facetAddress;
     }
 
-    function setImmutableUntil(uint256 timestampSeconds) internal {
-        diamondCloneStorage().immutableUntilTimestamp = timestampSeconds;
+    function setImmutableUntilBlock(uint256 blockNum) internal {
+        diamondCloneStorage().immutableUntilBlock = blockNum;
     }
 
     function isImmutable() internal view returns (bool) {
-        return block.timestamp < diamondCloneStorage().immutableUntilTimestamp;
+        return block.number < diamondCloneStorage().immutableUntilBlock;
     }
 
-    function immutableUntilTimestamp() internal view returns (uint256) {
-        return diamondCloneStorage().immutableUntilTimestamp;
+    function immutableUntilBlock() internal view returns (uint256) {
+        return diamondCloneStorage().immutableUntilBlock;
     }
 
     /**

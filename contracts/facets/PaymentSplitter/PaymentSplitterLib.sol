@@ -22,7 +22,7 @@ library PaymentSplitterLib {
         }
     }
 
-    function paymentSplitterInfo() internal view returns (SplitInfo[] memory) {
+    function paymentSplitterInfo() internal view returns (SplitInfo[] storage) {
         return paymentSplitterStorage().splits;
     }
 
