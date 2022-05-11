@@ -3,6 +3,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "../../interfaces/IERC721Metadata.sol";
+import {TransferHooksLib} from "../TransferHooks/TransferHooksLib.sol";
 
 pragma solidity ^0.8.4;
 
@@ -121,8 +122,7 @@ library ERC721ALib {
         if (to == address(0)) revert MintToZeroAddress();
         if (quantity == 0) revert MintZeroQuantity();
 
-        // TODO - implement!!
-        // _beforeTokenTransfers(address(0), to, startTokenId, quantity);
+        TransferHooksLib.beforeTokenTransfers(address(0), to, startTokenId, quantity);
 
         // Overflows are incredibly unrealistic.
         // balance or numberMinted overflow if current value of either + quantity > 1.8e19 (2**64) - 1
@@ -153,7 +153,7 @@ library ERC721ALib {
             }
             s._currentIndex = updatedIndex;
         }
-        // _afterTokenTransfers(address(0), to, startTokenId, quantity);
+        TransferHooksLib.afterTokenTransfers(address(0), to, startTokenId, quantity);
     }
 
     /**

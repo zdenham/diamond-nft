@@ -76,8 +76,24 @@ contract DiamondSaw is AccessControlFacet, AccessControlModifiers {
         return ds.interfaceToFacet[_interface];
     }
 
-    function setFacetForInterface(bytes4 _interface, address _facet) external onlyOwner {
+    function setFacetForERC165Interface(bytes4 _interface, address _facet) external onlyAdmin {
         DiamondSawLib.checkFacetSupported(_facet);
         DiamondSawLib.diamondSawStorage().interfaceToFacet[_interface] = _facet;
+    }
+
+    function setTransferHooksContractApproved(address tokenTransferHookContract, bool approved) external onlyOwner {
+        DiamondSawLib.setTransferHooksContractApproved(tokenTransferHookContract, approved);
+    }
+
+    function isTransferHooksContractApproved(address tokenTransferHookContract) external view returns (bool) {
+        return DiamondSawLib.diamondSawStorage().approvedTransferHooksContracts[tokenTransferHookContract];
+    }
+
+    function setUpgradeSawAddress(address _upgradeSaw) external onlyOwner {
+        DiamondSawLib.setUpgradeSawAddress(_upgradeSaw);
+    }
+
+    function getUpgradeSawAddress() external view returns (address) {
+        return DiamondSawLib.diamondSawStorage().upgradeSawAddress;
     }
 }

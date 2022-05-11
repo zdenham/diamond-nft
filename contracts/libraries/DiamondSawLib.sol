@@ -36,6 +36,10 @@ library DiamondSawLib {
         // two different facets with diamond saw because no
         // selector overlap is permitted!!
         mapping(bytes4 => address) interfaceToFacet;
+        // for transfer hooks, contracts must be approved in the saw
+        mapping(address => bool) approvedTransferHooksContracts;
+        // the next saw contract to upgrade to
+        address upgradeSawAddress;
     }
 
     function diamondSawStorage() internal pure returns (DiamondSawStorage storage ds) {
@@ -139,5 +143,13 @@ library DiamondSawLib {
 
     function checkFacetSupported(address _facetAddress) internal view {
         require(isFacetSupported(_facetAddress), "Facet not supported");
+    }
+
+    function setTransferHooksContractApproved(address hookContract, bool approved) internal {
+        diamondSawStorage().approvedTransferHooksContracts[hookContract] = approved;
+    }
+
+    function setUpgradeSawAddress(address _upgradeSaw) internal {
+        diamondSawStorage().upgradeSawAddress = _upgradeSaw;
     }
 }

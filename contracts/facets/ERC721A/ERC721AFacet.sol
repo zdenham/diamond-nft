@@ -242,7 +242,7 @@ abstract contract ERC721AFacet is IERC721Metadata {
         if (!isApprovedOrOwner) revert TransferCallerNotOwnerNorApproved();
         if (to == address(0)) revert TransferToZeroAddress();
 
-        _beforeTokenTransfers(from, to, tokenId, 1);
+        TransferHooksLib.beforeTokenTransfers(from, to, tokenId, 1);
 
         // Clear approvals from the previous owner
         _approve(address(0), tokenId, from);
@@ -273,7 +273,7 @@ abstract contract ERC721AFacet is IERC721Metadata {
         }
 
         emit Transfer(from, to, tokenId);
-        _afterTokenTransfers(from, to, tokenId, 1);
+        TransferHooksLib.afterTokenTransfers(from, to, tokenId, 1);
     }
 
     /**
@@ -305,7 +305,7 @@ abstract contract ERC721AFacet is IERC721Metadata {
             if (!isApprovedOrOwner) revert TransferCallerNotOwnerNorApproved();
         }
 
-        _beforeTokenTransfers(from, address(0), tokenId, 1);
+        TransferHooksLib.beforeTokenTransfers(from, address(0), tokenId, 1);
 
         // Clear approvals from the previous owner
         _approve(address(0), tokenId, from);
@@ -339,7 +339,7 @@ abstract contract ERC721AFacet is IERC721Metadata {
         }
 
         emit Transfer(from, address(0), tokenId);
-        _afterTokenTransfers(from, address(0), tokenId, 1);
+        TransferHooksLib.afterTokenTransfers(from, address(0), tokenId, 1);
 
         // Overflow not possible, as _burnCounter cannot be exceed _currentIndex times.
         unchecked {
@@ -360,49 +360,4 @@ abstract contract ERC721AFacet is IERC721Metadata {
         ERC721ALib.erc721AStorage()._tokenApprovals[tokenId] = to;
         emit Approval(owner, to, tokenId);
     }
-
-    /**
-     * @dev Hook that is called before a set of serially-ordered token ids are about to be transferred. This includes minting.
-     * And also called before burning one token.
-     *
-     * startTokenId - the first token id to be transferred
-     * quantity - the amount to be transferred
-     *
-     * Calling conditions:
-     *
-     * - When `from` and `to` are both non-zero, `from`'s `tokenId` will be
-     * transferred to `to`.
-     * - When `from` is zero, `tokenId` will be minted for `to`.
-     * - When `to` is zero, `tokenId` will be burned by `from`.
-     * - `from` and `to` are never both zero.
-     */
-    function _beforeTokenTransfers(
-        address from,
-        address to,
-        uint256 startTokenId,
-        uint256 quantity
-    ) internal virtual {}
-
-    /**
-     * @dev Hook that is called after a set of serially-ordered token ids have been transferred. This includes
-     * minting.
-     * And also called after one token has been burned.
-     *
-     * startTokenId - the first token id to be transferred
-     * quantity - the amount to be transferred
-     *
-     * Calling conditions:
-     *
-     * - When `from` and `to` are both non-zero, `from`'s `tokenId` has been
-     * transferred to `to`.
-     * - When `from` is zero, `tokenId` has been minted for `to`.
-     * - When `to` is zero, `tokenId` has been burned by `from`.
-     * - `from` and `to` are never both zero.
-     */
-    function _afterTokenTransfers(
-        address from,
-        address to,
-        uint256 startTokenId,
-        uint256 quantity
-    ) internal virtual {}
 }

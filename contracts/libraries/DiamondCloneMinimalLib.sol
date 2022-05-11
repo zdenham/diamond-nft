@@ -10,7 +10,7 @@ library DiamondCloneMinimalLib {
         address diamondSawAddress;
         // mapping to all the facets this diamond implements.
         mapping(address => bool) facetAddresses;
-        // gas cache (TODO)
+        // gas cache
         mapping(bytes4 => address) selectorGasCache;
     }
 
@@ -23,9 +23,14 @@ library DiamondCloneMinimalLib {
 
     // calls externally to the saw to find the appropriate facet to delegate to
     function _getFacetAddressForCall() internal returns (address addr) {
-        (bool success, bytes memory res) = diamondCloneStorage().diamondSawAddress.call(
-            abi.encodeWithSignature("facetAddressForSelector(bytes4)", msg.sig)
-        );
+        DiamondCloneStorage storage s = diamondCloneStorage();
+
+        addr = s.selectorGasCache[msg.sig];
+        if (addr != address(0)) {
+            return addr;
+        }
+
+        (bool success, bytes memory res) = s.diamondSawAddress.call(abi.encodeWithSignature("facetAddressForSelector(bytes4)", msg.sig));
         require(success, "Failed to fetch facet address for call");
 
         assembly {

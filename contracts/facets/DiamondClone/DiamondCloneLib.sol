@@ -14,16 +14,35 @@ library DiamondCloneLib {
         address diamondSawAddress;
         // mapping to all the facets this diamond implements.
         mapping(address => bool) facetAddresses;
+        // number of facets supported
+        uint256 numFacets;
         // optional gas cache for highly trafficked write selectors
-        mapping(bytes4 => address) optionalSelectorGasCache;
-        // optional facet gas cache to make loupe cheaper
-        address[] optionalFacetAddressGasCache;
+        mapping(bytes4 => address) selectorGasCache;
+        // immutability window
+        uint256 immutableUntilTimestamp;
     }
 
     function diamondCloneStorage() internal pure returns (DiamondCloneStorage storage s) {
         bytes32 position = DIAMOND_CLONE_STORAGE_POSITION;
         assembly {
             s.slot := position
+        }
+    }
+
+    // calls externally to the saw to find the appropriate facet to delegate to
+    function _getFacetAddressForCall() internal returns (address addr) {
+        DiamondCloneStorage storage s = diamondCloneStorage();
+
+        addr = s.selectorGasCache[msg.sig];
+        if (addr != address(0)) {
+            return addr;
+        }
+
+        (bool success, bytes memory res) = s.diamondSawAddress.call(abi.encodeWithSignature("facetAddressForSelector(bytes4)", msg.sig));
+        require(success, "Failed to fetch facet address for call");
+
+        assembly {
+            addr := mload(add(res, 32))
         }
     }
 
@@ -64,6 +83,18 @@ library DiamondCloneLib {
                 revert("DiamondCloneLib: _init function reverted");
             }
         }
+
+        s.numFacets = _facetAddresses.length;
+    }
+
+    function _purgeGasCache(bytes4[] memory selectors) internal {
+        DiamondCloneStorage storage s = diamondCloneStorage();
+
+        for (uint256 i; i < selectors.length; i++) {
+            if (s.selectorGasCache[selectors[i]] != address(0)) {
+                delete s.selectorGasCache[selectors[i]];
+            }
+        }
     }
 
     function cutWithDiamondSaw(
@@ -72,6 +103,8 @@ library DiamondCloneLib {
         bytes calldata _calldata
     ) internal {
         DiamondCloneStorage storage s = diamondCloneStorage();
+
+        uint256 newNumFacets = s.numFacets;
 
         // emit the diamond cut event
         for (uint256 i; i < _diamondCut.length; i++) {
@@ -90,10 +123,13 @@ library DiamondCloneLib {
             // otherwise add the selectors
             if (s.facetAddresses[cut.facetAddress]) {
                 require(cut.action == IDiamondCut.FacetCutAction.Remove, "Can only remove existing facet selectors");
-                s.facetAddresses[cut.facetAddress] = false;
+                delete s.facetAddresses[cut.facetAddress];
+                _purgeGasCache(selectors);
+                newNumFacets -= 1;
             } else {
                 require(cut.action == IDiamondCut.FacetCutAction.Add, "Can only add non-existing facet selectors");
                 s.facetAddresses[cut.facetAddress] = true;
+                newNumFacets += 1;
             }
         }
 
@@ -109,18 +145,86 @@ library DiamondCloneLib {
                 revert("DiamondCloneLib: _init function reverted");
             }
         }
+
+        s.numFacets = newNumFacets;
     }
 
-    // calls externally to the saw to find the appropriate facet to delegate to
-    function _getFacetAddressForCall() internal returns (address addr) {
-        (bool success, bytes memory res) = diamondCloneStorage().diamondSawAddress.call(
-            abi.encodeWithSignature("facetAddressForSelector(bytes4)", msg.sig)
-        );
-        require(success, "Failed to fetch facet address for call");
+    function upgradeDiamondSaw(
+        address[] calldata _oldFacetAddresses,
+        address[] calldata _newFacetAddresses,
+        address _init,
+        bytes calldata _calldata
+    ) internal {
+        require(!isImmutable(), "Cannot upgrade saw during immutability window");
+        DiamondCloneStorage storage s = diamondCloneStorage();
+        require(_oldFacetAddresses.length == s.numFacets, "Must remove all facets to upgrade saw");
+        DiamondSaw oldSawInstance = DiamondSaw(s.diamondSawAddress);
+        address upgradeSawAddress = oldSawInstance.getUpgradeSawAddress();
+        DiamondSaw newSawInstance = DiamondSaw(upgradeSawAddress);
 
-        assembly {
-            addr := mload(add(res, 32))
+        IDiamondCut.FacetCut[] memory cuts = new IDiamondCut.FacetCut[](_oldFacetAddresses.length + _newFacetAddresses.length);
+
+        for (uint256 i; i < _oldFacetAddresses.length + _newFacetAddresses.length; i++) {
+            if (i < _oldFacetAddresses.length) {
+                address facetAddress = _oldFacetAddresses[i];
+                require(s.facetAddresses[facetAddress], "Cannot remove facet that is not supported");
+                bytes4[] memory selectors = oldSawInstance.functionSelectorsForFacetAddress(facetAddress);
+                require(selectors.length > 0, "Facet is not supported by the saw");
+
+                cuts[i].action = IDiamondCut.FacetCutAction.Remove;
+                cuts[i].facetAddress = facetAddress;
+                cuts[i].functionSelectors = selectors;
+
+                _purgeGasCache(selectors);
+                delete s.facetAddresses[facetAddress];
+            } else {
+                address facetAddress = _newFacetAddresses[i - _oldFacetAddresses.length];
+                bytes4[] memory selectors = newSawInstance.functionSelectorsForFacetAddress(facetAddress);
+                require(selectors.length > 0, "Facet is not supported by the saw");
+
+                cuts[i].action = IDiamondCut.FacetCutAction.Add;
+                cuts[i].facetAddress = facetAddress;
+                cuts[i].functionSelectors = selectors;
+
+                s.facetAddresses[facetAddress] = true;
+            }
         }
+
+        emit DiamondCut(cuts, _init, _calldata);
+
+        // call the init function
+        (bool success, bytes memory error) = _init.delegatecall(_calldata);
+        if (!success) {
+            if (error.length > 0) {
+                // bubble up the error
+                revert(string(error));
+            } else {
+                revert("DiamondCloneLib: _init function reverted");
+            }
+        }
+
+        s.numFacets = _newFacetAddresses.length;
+    }
+
+    function setGasCacheForSelector(bytes4 selector) internal {
+        DiamondCloneStorage storage s = diamondCloneStorage();
+
+        address facetAddress = DiamondSaw(s.diamondSawAddress).facetAddressForSelector(selector);
+        require(facetAddress != address(0), "Facet not supported");
+
+        s.selectorGasCache[selector] = facetAddress;
+    }
+
+    function setImmutableUntil(uint256 timestampSeconds) internal {
+        diamondCloneStorage().immutableUntilTimestamp = timestampSeconds;
+    }
+
+    function isImmutable() internal view returns (bool) {
+        return block.timestamp < diamondCloneStorage().immutableUntilTimestamp;
+    }
+
+    function immutableUntilTimestamp() internal view returns (uint256) {
+        return diamondCloneStorage().immutableUntilTimestamp;
     }
 
     /**
@@ -133,19 +237,13 @@ library DiamondCloneLib {
 
         uint256 copyIndex = 0;
 
-        // start the array with full lengh of saw facets
-        facets_ = new IDiamondLoupe.Facet[](allSawFacets.length);
+        facets_ = new IDiamondLoupe.Facet[](ds.numFacets);
 
         for (uint256 i; i < allSawFacets.length; i++) {
             if (ds.facetAddresses[allSawFacets[i].facetAddress]) {
                 facets_[copyIndex] = allSawFacets[i];
-            } else {
-                // reduce the length of the facets_ array
-                assembly {
-                    mstore(facets_, sub(mload(facets_), 1))
-                }
+                copyIndex++;
             }
-            copyIndex++;
         }
     }
 
@@ -153,20 +251,15 @@ library DiamondCloneLib {
         DiamondCloneLib.DiamondCloneStorage storage ds = DiamondCloneLib.diamondCloneStorage();
 
         address[] memory allSawFacetAddresses = DiamondSaw(ds.diamondSawAddress).allFacetAddresses();
-        facetAddresses_ = new address[](allSawFacetAddresses.length);
+        facetAddresses_ = new address[](ds.numFacets);
 
         uint256 copyIndex = 0;
 
         for (uint256 i; i < allSawFacetAddresses.length; i++) {
             if (ds.facetAddresses[allSawFacetAddresses[i]]) {
                 facetAddresses_[copyIndex] = allSawFacetAddresses[i];
-            } else {
-                assembly {
-                    mstore(facetAddresses_, sub(mload(facetAddresses_), 1))
-                }
+                copyIndex++;
             }
-
-            copyIndex++;
         }
     }
 }
