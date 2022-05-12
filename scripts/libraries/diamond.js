@@ -2,6 +2,38 @@
 
 const FacetCutAction = { Add: 0, Replace: 1, Remove: 2 };
 
+const deployTest1Facet = async () => {
+  const Test1Facet = await ethers.getContractFactory("Test1Facet");
+  const test1Facet = await Test1Facet.deploy();
+  await test1Facet.deployed();
+  return test1Facet;
+};
+
+const getDecodedEventsFromContract = async (contractInstance) => {
+  const events = await contractInstance.queryFilter(
+    { address: contractInstance.address },
+    0,
+    999
+  );
+
+  // roundabout way of testing events in constructor
+  const iface = new ethers.utils.Interface(cutAbi.abi);
+
+  const decodedEvents = events
+    .map((event) => {
+      try {
+        const decodedArr = iface.parseLog(event);
+        return { ...decodedArr };
+      } catch (_) {
+        // event defined on different facet ABI
+        return null;
+      }
+    })
+    .filter((e) => !!e);
+
+  return decodedEvents;
+};
+
 // get function selectors from ABI
 function getSelectors(contract) {
   const signatures = Object.keys(contract.interface.functions);
@@ -82,3 +114,6 @@ exports.FacetCutAction = FacetCutAction;
 exports.remove = remove;
 exports.removeSelectors = removeSelectors;
 exports.findAddressPositionInFacets = findAddressPositionInFacets;
+
+exports.deployTest1Facet = deployTest1Facet;
+exports.getDecodedEventsFromContract = getDecodedEventsFromContract;

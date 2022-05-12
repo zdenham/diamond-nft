@@ -62,6 +62,8 @@ library ERC721ALib {
         string _name;
         // Token symbol
         string _symbol;
+        // start index
+        uint256 _startIndex;
         // Mapping from token ID to ownership details
         // An empty struct value does not necessarily mean the token is unowned. See _ownershipOf implementation for details.
         mapping(uint256 => TokenOwnership) _ownerships;
@@ -195,7 +197,7 @@ library ERC721ALib {
         }
     }
 
-    function _startTokenId() internal pure returns (uint256) {
-        return 1;
+    function _startTokenId() internal view returns (uint256) {
+        return erc721AStorage()._startIndex;
     }
 }

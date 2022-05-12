@@ -4,38 +4,6 @@ const {
 } = require("../scripts/libraries/diamond.js");
 require("@nomiclabs/hardhat-waffle");
 
-const deployTest1Facet = async () => {
-  const Test1Facet = await ethers.getContractFactory("Test1Facet");
-  const test1Facet = await Test1Facet.deploy();
-  await test1Facet.deployed();
-  return test1Facet;
-};
-
-const getDecodedEventsFromContract = async (contractInstance) => {
-  const events = await contractInstance.queryFilter(
-    { address: contractInstance.address },
-    0,
-    999
-  );
-
-  // roundabout way of testing events in constructor
-  const iface = new ethers.utils.Interface(cutAbi.abi);
-
-  const decodedEvents = events
-    .map((event) => {
-      try {
-        const decodedArr = iface.parseLog(event);
-        return { ...decodedArr };
-      } catch (_) {
-        // event defined on different facet ABI
-        return null;
-      }
-    })
-    .filter((e) => !!e);
-
-  return decodedEvents;
-};
-
 const { deployDiamond } = require("../scripts/deploy.js");
 
 const { assert, expect } = require("chai");
@@ -67,6 +35,8 @@ describe("DiamondTest", async function () {
   });
 
   it("should properly pass through the name, symbol, and max supply from calldata", async () => {
+    await baseNFTFacetInstance.setTokenMeta("Blah", "Blah", 1);
+
     const name = await baseNFTFacetInstance.name();
     const symbol = await baseNFTFacetInstance.symbol();
 
@@ -321,11 +291,6 @@ describe("DiamondTest", async function () {
   // });
 
   // it("should reject a call in the clone to a removed facet selector", async () => {
-  //   expect(false).to.equal(true);
-  // });
-
-  // it("should gate owner or admin gated functions properly", async () => {
-  //   // list out all owner / admin functions and test them here
   //   expect(false).to.equal(true);
   // });
 

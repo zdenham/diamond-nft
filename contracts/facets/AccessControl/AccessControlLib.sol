@@ -25,6 +25,10 @@ library AccessControlLib {
         return accessControlStorage()._owner == msg.sender;
     }
 
+    function owner() internal view returns (address) {
+        return accessControlStorage()._owner;
+    }
+
     function _enforceOwner() internal view {
         require(_isOwner(), "Caller is not the owner");
     }

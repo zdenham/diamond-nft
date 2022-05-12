@@ -20,19 +20,23 @@ contract BaseNFTFacet is SaleStateModifiers, AccessControlModifiers, AccessContr
     using Strings for uint256;
 
     function init() external {
-        ERC721ALib.ERC721AStorage storage s = ERC721ALib.erc721AStorage();
-        require(s._currentIndex == 0, "Already initialized");
+        require(AccessControlLib.owner() == address(0), "Already initialized");
         AccessControlLib._transferOwnership(msg.sender);
-        s._currentIndex = 1;
     }
 
-    function setTokenMeta(string memory _name, string memory _symbol) external onlyOwner {
-        require(bytes(_name).length > 0, "Cannot set blank name");
-        require(bytes(_symbol).length > 0, "Cannot set blank symbol");
+    function setTokenMeta(
+        string memory _name,
+        string memory _symbol,
+        uint256 _startIndex
+    ) public onlyOwner {
         ERC721ALib.ERC721AStorage storage s = ERC721ALib.erc721AStorage();
-        require(bytes(s._name).length == 0, "Token meta already set");
         s._name = _name;
         s._symbol = _symbol;
+
+        if (s._currentIndex == 0 && _startIndex != 0) {
+            s._startIndex = _startIndex;
+            s._currentIndex = _startIndex;
+        }
     }
 
     function setMaxSupply(uint256 _maxSupply) public onlyAdmin {

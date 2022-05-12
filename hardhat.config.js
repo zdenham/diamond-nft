@@ -1,30 +1,55 @@
-/* global ethers task */
 require("@nomiclabs/hardhat-waffle");
-require("hardhat-gas-reporter");
 require("hardhat-contract-sizer");
+require("dotenv").config();
+require("@nomiclabs/hardhat-ethers");
+require("@typechain/hardhat");
+require("hardhat-gas-reporter");
+require("@nomiclabs/hardhat-waffle");
+require("@nomiclabs/hardhat-etherscan");
 
-// This is a sample Hardhat task. To learn how to create your own go to
-// https://hardhat.org/guides/create-task.html
-task("accounts", "Prints the list of accounts", async () => {
-  const accounts = await ethers.getSigners();
+const {
+  TESTNET_CONTRACT_OWNER_PRIVATE_KEY,
+  HARDHAT_CONTRACT_OWNER_PRIVATE_KEY,
+  MAINNET_CONTRACT_OWNER_PRIVATE_KEY,
+  MUMBAI_RPC_URL,
+  POLYGON_RPC_URL,
+  POLYGON_SCANNER_API_KEY,
+  MAINNET_SCANNER_API_KEY,
+  RINKEBY_RPC_URL,
+  MAINNET_RPC_URL,
+} = process.env;
 
-  for (const account of accounts) {
-    console.log(account.address);
-  }
-});
-
-// You need to export an object to set up your config
-// Go to https://hardhat.org/config/ to learn more
-
-/**
- * @type import('hardhat/config').HardhatUserConfig
- */
 module.exports = {
-  solidity: "0.8.6",
-  settings: {
-    optimizer: {
-      enabled: true,
-      runs: 200,
+  solidity: "0.8.4",
+  networks: {
+    hardhat: {
+      allowUnlimitedContractSize: true,
+    },
+    local: {
+      url: "http://127.0.0.1:8545",
+      accounts: [HARDHAT_CONTRACT_OWNER_PRIVATE_KEY],
+    },
+    mumbai: {
+      url: MUMBAI_RPC_URL,
+      accounts: [TESTNET_CONTRACT_OWNER_PRIVATE_KEY],
+    },
+    polygon: {
+      url: POLYGON_RPC_URL,
+      accounts: [MAINNET_CONTRACT_OWNER_PRIVATE_KEY],
+    },
+    rinkeby: {
+      url: RINKEBY_RPC_URL,
+      accounts: [TESTNET_CONTRACT_OWNER_PRIVATE_KEY],
+    },
+    mainnet: {
+      url: MAINNET_RPC_URL,
+      accounts: [MAINNET_CONTRACT_OWNER_PRIVATE_KEY],
+    },
+  },
+  etherscan: {
+    apiKey: {
+      polygon: POLYGON_SCANNER_API_KEY,
+      mainnet: MAINNET_SCANNER_API_KEY,
     },
   },
 };
