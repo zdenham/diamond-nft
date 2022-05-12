@@ -39,12 +39,14 @@ library DiamondCloneLib {
             return addr;
         }
 
-        (bool success, bytes memory res) = s.diamondSawAddress.call(abi.encodeWithSignature("facetAddressForSelector(bytes4)", msg.sig));
+        (bool success, bytes memory res) = s.diamondSawAddress.call(abi.encodeWithSelector(0x14bc7560, msg.sig));
         require(success, "Failed to fetch facet address for call");
 
         assembly {
             addr := mload(add(res, 32))
         }
+
+        return s.facetAddresses[addr] ? addr : address(0);
     }
 
     function initialCutWithDiamondSaw(
@@ -74,15 +76,9 @@ library DiamondCloneLib {
         emit DiamondCut(cuts, _init, _calldata);
 
         // call the init function
-        (bool success, bytes memory err) = _init.delegatecall(_calldata);
-
-        if (!success) {
-            if (err.length > 0) {
-                // bubble up the error
-                revert(string(err));
-            } else {
-                revert("DiamondCloneLib: _init function reverted");
-            }
+        (, bytes memory err) = _init.delegatecall(_calldata);
+        if (err.length > 0) {
+            revert(string(err));
         }
 
         s.numFacets = _facetAddresses.length;

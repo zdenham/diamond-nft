@@ -40,7 +40,8 @@ library BaseNFTLib {
     }
 
     function _safeMint(address to, uint256 quantity) internal {
-        require(baseNFTStorage().maxSupply > (ERC721ALib.totalSupply() + quantity), "Mint exceeds max supply");
+        uint256 max = baseNFTStorage().maxSupply;
+        require(max == 0 || max > (ERC721ALib.totalSupply() + quantity), "Mint exceeds max supply");
         ERC721ALib._safeMint(to, quantity);
     }
 

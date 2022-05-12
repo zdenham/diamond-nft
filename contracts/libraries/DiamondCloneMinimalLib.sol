@@ -30,11 +30,13 @@ library DiamondCloneMinimalLib {
             return addr;
         }
 
-        (bool success, bytes memory res) = s.diamondSawAddress.call(abi.encodeWithSignature("facetAddressForSelector(bytes4)", msg.sig));
+        (bool success, bytes memory res) = s.diamondSawAddress.call(abi.encodeWithSelector(0x14bc7560, msg.sig));
         require(success, "Failed to fetch facet address for call");
 
         assembly {
             addr := mload(add(res, 32))
         }
+
+        return s.facetAddresses[addr] ? addr : address(0);
     }
 }

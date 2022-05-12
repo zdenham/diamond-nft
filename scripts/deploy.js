@@ -8,10 +8,12 @@ async function deployDiamond() {
   const accounts = await ethers.getSigners();
   const contractOwner = accounts[0];
 
-  // deploy DiamondCutFacet
-  // const DiamondCutFacet = await ethers.getContractFactory('DiamondCutFacet')
-  // const diamondCutFacet = await DiamondCutFacet.deploy()
-  // await diamondCutFacet.deployed()
+  // deploy BaseDiamondCloneFacet
+  const BaseDiamondCloneFacet = await ethers.getContractFactory(
+    "BaseDiamondCloneFacet"
+  );
+  const baseDiamondCloneFacet = await BaseDiamondCloneFacet.deploy();
+  await baseDiamondCloneFacet.deployed();
 
   const BaseNFTFacet = await ethers.getContractFactory("BaseNFTFacet");
   const baseNFTFacet = await BaseNFTFacet.deploy();
@@ -22,8 +24,13 @@ async function deployDiamond() {
   const diamondSaw = await DiamondSaw.deploy();
   await diamondSaw.deployed();
 
-  // add the BaseNFT facet pattern to the SAW
+  // add the BaseDiamond and BaseNFT facet pattern to the SAW
   const add = [
+    {
+      facetAddress: baseDiamondCloneFacet.address,
+      action: FacetCutAction.Add,
+      functionSelectors: getSelectors(baseDiamondCloneFacet),
+    },
     {
       facetAddress: baseNFTFacet.address,
       action: FacetCutAction.Add,
@@ -36,15 +43,11 @@ async function deployDiamond() {
   // deploy Diamond Clone
   const DiamondClone = await ethers.getContractFactory("DiamondClone");
 
-  let functionCall = baseNFTFacet.interface.encodeFunctionData("init", [
-    "Blah",
-    "Blah",
-    10000,
-  ]);
+  let functionCall = baseNFTFacet.interface.encodeFunctionData("init");
 
   const diamondClone = await DiamondClone.deploy(
     diamondSaw.address,
-    [baseNFTFacet.address],
+    [baseDiamondCloneFacet.address, baseNFTFacet.address],
     baseNFTFacet.address,
     functionCall
   );
@@ -55,6 +58,7 @@ async function deployDiamond() {
     initCallData: functionCall,
     sawInstance: diamondSaw,
     baseNFTFacetImplementation: baseNFTFacet,
+    baseDiamondImplementation: baseDiamondCloneFacet,
   };
 }
 

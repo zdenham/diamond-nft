@@ -25,6 +25,8 @@ library ERC721ALib {
     using Address for address;
     using Strings for uint256;
 
+    bytes32 constant ERC721A_STORAGE_POSITION = keccak256("erc721a.facet.storage");
+
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
 
     // Compiler will pack this into a single 256bit word.
@@ -72,7 +74,7 @@ library ERC721ALib {
     }
 
     function erc721AStorage() internal pure returns (ERC721AStorage storage es) {
-        bytes32 position = keccak256("erc721a.facet.storage");
+        bytes32 position = ERC721A_STORAGE_POSITION;
         assembly {
             es.slot := position
         }

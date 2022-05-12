@@ -2,13 +2,14 @@
 pragma solidity ^0.8.0;
 
 library AllowListMintLib {
+    bytes32 constant ALLOW_LIST_MINT_STORAGE_POSITION = keccak256("allow.list.mint.facet.storage");
     struct AllowListMintStorage {
         mapping(address => uint256) _allowList;
         uint256 allowListMintPrice;
     }
 
     function allowListMintStorage() internal pure returns (AllowListMintStorage storage es) {
-        bytes32 position = keccak256("allow.list.mint.facet.storage");
+        bytes32 position = ALLOW_LIST_MINT_STORAGE_POSITION;
         assembly {
             es.slot := position
         }
