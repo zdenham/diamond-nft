@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../DiamondSaw.sol";
+import {DiamondSaw} from "../../DiamondSaw.sol";
 import {IDiamondLoupe} from "./IDiamondLoupe.sol";
+import {IDiamondCut} from "./IDiamondCut.sol";
 
 library DiamondCloneLib {
     bytes32 constant DIAMOND_CLONE_STORAGE_POSITION = keccak256("diamond.standard.diamond.clone.storage");

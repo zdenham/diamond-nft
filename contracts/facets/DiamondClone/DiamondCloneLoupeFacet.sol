@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {DiamondCloneLib} from "./DiamondCloneLib.sol";
 import {IDiamondLoupe} from "./IDiamondLoupe.sol";
 import {IERC165} from "../../interfaces/IERC165.sol";
-import "../../DiamondSaw.sol";
+import {DiamondSaw} from "../../DiamondSaw.sol";
 
 // The functions in DiamondLoupeFacet MUST be added to a diamond.
 // The EIP-2535 Diamond standard requires these functions.

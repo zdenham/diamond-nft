@@ -2,14 +2,13 @@
 
 pragma solidity ^0.8.4;
 
-import {ERC721AFacet} from "./ERC721A/ERC721AFacet.sol";
-import {ERC721ALib, Strings} from "./ERC721A/ERC721ALib.sol";
+import {ERC721AFacet, ERC721ALib} from "./ERC721A/ERC721AFacet.sol";
+import {Strings} from "./ERC721A/ERC721ALib.sol";
 import {AccessControlFacet} from "./AccessControl/AccessControlFacet.sol";
 import {AccessControlModifiers} from "./AccessControl/AccessControlModifiers.sol";
 import {AccessControlLib} from "./AccessControl/AccessControlLib.sol";
 import {DiamondCloneCutFacet} from "./DiamondClone/DiamondCloneCutFacet.sol";
 import {DiamondCloneLoupeFacet} from "./DiamondClone/DiamondCloneLoupeFacet.sol";
-import {RoyaltyStandardFacet} from "./RoyaltyStandard/RoyaltyStandardFacet.sol";
 import {BaseNFTLib} from "./BaseNFTLib.sol";
 import {SaleStateModifiers} from "./BaseNFTModifiers.sol";
 import {URIStorageLib} from "./URIStorage/URIStorageLib.sol";
@@ -17,21 +16,13 @@ import {URIStorageLib} from "./URIStorage/URIStorageLib.sol";
 // Inherit from other facets in the BaseNFTFacet
 // Why inherit to one facet instead of deploying Each Facet Separately?
 // Because its cheaper for end customers to just store / cut one facet address
-contract BaseNFTFacet is
-    SaleStateModifiers,
-    AccessControlModifiers,
-    AccessControlFacet,
-    DiamondCloneCutFacet,
-    DiamondCloneLoupeFacet,
-    ERC721AFacet,
-    RoyaltyStandardFacet
-{
+
+contract BaseNFTFacet is SaleStateModifiers, AccessControlModifiers, AccessControlFacet, DiamondCloneCutFacet, DiamondCloneLoupeFacet, ERC721AFacet {
     using Strings for uint256;
 
     function init() external {
         ERC721ALib.ERC721AStorage storage s = ERC721ALib.erc721AStorage();
         require(s._currentIndex == 0, "Already initialized");
-
         AccessControlLib._transferOwnership(msg.sender);
         s._currentIndex = 1;
     }
@@ -84,10 +75,8 @@ contract BaseNFTFacet is
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         if (!_exists(tokenId)) revert("Cannot Query tokenURI for non-existant tokenId");
-
         string storage tokenURIFromStorage = URIStorageLib.tokenURIFromStorage(tokenId);
         string storage baseURI = BaseNFTLib.baseNFTStorage().baseURI;
-
         // check first for URIStorage
         // then fall back on baseURI + tokenId
         return

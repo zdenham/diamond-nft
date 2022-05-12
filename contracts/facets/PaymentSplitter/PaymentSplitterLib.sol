@@ -38,14 +38,17 @@ library PaymentSplitterLib {
         }
 
         uint256 total;
-        for (uint256 i; i < splits.length; i++) {
-            require(splits[i].splitAddress != address(0), "Cannot set payment split to null address");
-            total += splits[i].basisPoints;
+        for (uint256 i; i < s.splits.length; i++) {
+            if (i < splits.length) {
+                require(splits[i].splitAddress != address(0), "Cannot set payment split to null address");
+                total += splits[i].basisPoints;
+                s.splits.push(splits[i]);
+            } else {
+                delete splits[i];
+            }
         }
 
         require(total == BASIS, "payment split does not add up to basis");
-
-        paymentSplitterStorage().splits = splits;
     }
 
     function withdraw() internal {
