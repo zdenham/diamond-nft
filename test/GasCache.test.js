@@ -11,7 +11,7 @@ const { ethers } = require("hardhat");
 
 const cutAbi = require("../artifacts/contracts/facets/DiamondClone/DiamondCloneCutFacet.sol/DiamondCloneCutFacet.json");
 
-describe("AccessControlTest", async function () {
+describe("DiamondTest", async function () {
   let diamondAddress,
     initCallData,
     sawInstance,
@@ -34,11 +34,23 @@ describe("AccessControlTest", async function () {
     contractOwner = accounts[0];
   });
 
-  it("Should reflect the default royalty set and the receiver should be the contract", async () => {
+  it("Should reduce the gas cost if the gas cache is set", async () => {
     expect(false).to.equal(true);
   });
 
-  it("should be able to reveive funds in the contract", async () => {
+  it("Should appropriately purge the gas cache on removal of a facet", async () => {
+    expect(false).to.equal(true);
+  });
+
+  it("should reject setting of gas cache if the selector is not supported by the saw", async () => {
+    expect(false).to.equal(true);
+  });
+
+  it("should reject setting of gas cache if the selector is not a part of the clone", async () => {
+    expect(false).to.equal(true);
+  });
+
+  it("should appropriately purge the gas cache on diamond saw upgrade", async () => {
     expect(false).to.equal(true);
   });
 });

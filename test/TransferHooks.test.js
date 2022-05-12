@@ -33,4 +33,14 @@ describe("AccessControlTest", async function () {
     accounts = await ethers.getSigners();
     contractOwner = accounts[0];
   });
+
+  it("Should reject set transfer hooks (both before and after) if the contracts are not registered with the saw", async () => {
+    // TODO -
+    expect(false).to.equal(true);
+  });
+
+  it("should appropriatly call transfer hooks on token transfer", async () => {
+    // TODO -
+    expect(false).to.equal(true);
+  });
 });

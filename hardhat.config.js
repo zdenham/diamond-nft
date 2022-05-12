@@ -2,7 +2,6 @@ require("@nomiclabs/hardhat-waffle");
 require("hardhat-contract-sizer");
 require("dotenv").config();
 require("@nomiclabs/hardhat-ethers");
-require("@typechain/hardhat");
 require("hardhat-gas-reporter");
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
@@ -15,6 +14,7 @@ const {
   POLYGON_RPC_URL,
   POLYGON_SCANNER_API_KEY,
   MAINNET_SCANNER_API_KEY,
+  RINKEBY_SCANNER_API_KEY,
   RINKEBY_RPC_URL,
   MAINNET_RPC_URL,
 } = process.env;
@@ -38,7 +38,7 @@ module.exports = {
       accounts: [MAINNET_CONTRACT_OWNER_PRIVATE_KEY],
     },
     rinkeby: {
-      url: RINKEBY_RPC_URL,
+      url: "https://rinkeby.infura.io/v3/a8846b8c3fdb46dea53be16c64411520", // RINKEBY_RPC_URL,
       accounts: [TESTNET_CONTRACT_OWNER_PRIVATE_KEY],
     },
     mainnet: {
@@ -50,6 +50,7 @@ module.exports = {
     apiKey: {
       polygon: POLYGON_SCANNER_API_KEY,
       mainnet: MAINNET_SCANNER_API_KEY,
+      rinkeby: RINKEBY_SCANNER_API_KEY,
     },
   },
 };

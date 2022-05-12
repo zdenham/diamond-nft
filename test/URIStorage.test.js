@@ -33,4 +33,18 @@ describe("AccessControlTest", async function () {
     accounts = await ethers.getSigners();
     contractOwner = accounts[0];
   });
+
+  it("should set the base uri appripriately", async () => {
+    // TODO -
+    expect(false).to.equal(true);
+  });
+
+  it("should support setting a specific token uri which override the base uri", async () => {
+    expect(false).to.equal(true);
+  });
+
+  it("should appropriately remove the token URI if the token is burned", async () => {
+    // not sure if we need this one tbh
+    expect(false).to.equal(true);
+  });
 });

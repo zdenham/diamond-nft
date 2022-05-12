@@ -4,6 +4,9 @@
 const { ethers } = require("hardhat");
 const { getSelectors, FacetCutAction } = require("./libraries/diamond.js");
 
+const maxFeePerGas = 5000000000;
+const maxPriorityFeePerGas = 3000000000;
+
 async function deployDiamond() {
   const accounts = await ethers.getSigners();
   const contractOwner = accounts[0];
@@ -12,16 +15,39 @@ async function deployDiamond() {
   const BaseDiamondCloneFacet = await ethers.getContractFactory(
     "BaseDiamondCloneFacet"
   );
-  const baseDiamondCloneFacet = await BaseDiamondCloneFacet.deploy();
+  const baseDiamondCloneFacet = await BaseDiamondCloneFacet.deploy({
+    maxFeePerGas,
+    maxPriorityFeePerGas,
+  });
+
+  console.log(
+    "Deploy diamond Clone Facet with txn hash",
+    baseDiamondCloneFacet.deployTransaction.hash
+  );
+
   await baseDiamondCloneFacet.deployed();
 
   const BaseNFTFacet = await ethers.getContractFactory("BaseNFTFacet");
-  const baseNFTFacet = await BaseNFTFacet.deploy();
+  const baseNFTFacet = await BaseNFTFacet.deploy({
+    maxFeePerGas,
+    maxPriorityFeePerGas,
+  });
+  console.log(
+    "Deploy NFT Facet with txn hash",
+    baseNFTFacet.deployTransaction.hash
+  );
   await baseNFTFacet.deployed();
 
   // deploy the SAW!
   const DiamondSaw = await ethers.getContractFactory("DiamondSaw");
-  const diamondSaw = await DiamondSaw.deploy();
+  const diamondSaw = await DiamondSaw.deploy({
+    maxFeePerGas,
+    maxPriorityFeePerGas,
+  });
+  console.log(
+    "Deploy Diamond Saw with txn hash",
+    diamondSaw.deployTransaction.hash
+  );
   await diamondSaw.deployed();
 
   // add the BaseDiamond and BaseNFT facet pattern to the SAW
@@ -38,7 +64,16 @@ async function deployDiamond() {
     },
   ];
 
-  await diamondSaw.addFacetPattern(add, ethers.constants.AddressZero, "0x");
+  const tx = await diamondSaw.addFacetPattern(
+    add,
+    ethers.constants.AddressZero,
+    "0x",
+    { maxFeePerGas, maxPriorityFeePerGas, gasLimit: 1500000 }
+  );
+
+  await tx.wait();
+
+  console.log("Cutting saw with txn hash", tx.hash);
 
   // deploy Diamond Clone
   const DiamondClone = await ethers.getContractFactory("DiamondClone");
@@ -49,8 +84,15 @@ async function deployDiamond() {
     diamondSaw.address,
     [baseDiamondCloneFacet.address, baseNFTFacet.address],
     baseNFTFacet.address,
-    functionCall
+    functionCall,
+    { maxFeePerGas, maxPriorityFeePerGas }
   );
+
+  console.log(
+    "Deploy Diamond Saw with txn hash",
+    diamondSaw.deployTransaction.hash
+  );
+
   await diamondClone.deployed();
 
   return {

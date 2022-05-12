@@ -11,7 +11,7 @@ const { ethers } = require("hardhat");
 
 const cutAbi = require("../artifacts/contracts/facets/DiamondClone/DiamondCloneCutFacet.sol/DiamondCloneCutFacet.json");
 
-describe("AccessControlTest", async function () {
+describe("DiamondTest", async function () {
   let diamondAddress,
     initCallData,
     sawInstance,
@@ -34,11 +34,21 @@ describe("AccessControlTest", async function () {
     contractOwner = accounts[0];
   });
 
-  it("Should reflect the default royalty set and the receiver should be the contract", async () => {
+  it("Should reject a cut during an immutability window", async () => {
     expect(false).to.equal(true);
   });
 
-  it("should be able to reveive funds in the contract", async () => {
+  it("Should reject a saw upgrade during an immutability window", async () => {
+    expect(false).to.equal(true);
+  });
+
+  it("Should reject an update to the immutability window during an immutability window", async () => {
+    // TODO -
+    expect(false).to.equal(true);
+  });
+
+  it("should allow updates after the immutability window is complete", async () => {
+    // TODO -
     expect(false).to.equal(true);
   });
 });
