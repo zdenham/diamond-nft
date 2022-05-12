@@ -5,19 +5,18 @@ pragma solidity ^0.8.4;
 import {ERC721AFacet, ERC721ALib} from "./ERC721A/ERC721AFacet.sol";
 import {Strings} from "./ERC721A/ERC721ALib.sol";
 import {AccessControlFacet} from "./AccessControl/AccessControlFacet.sol";
-import {AccessControlModifiers} from "./AccessControl/AccessControlModifiers.sol";
-import {AccessControlLib} from "./AccessControl/AccessControlLib.sol";
-import {DiamondCloneCutFacet} from "./DiamondClone/DiamondCloneCutFacet.sol";
-import {DiamondCloneLoupeFacet} from "./DiamondClone/DiamondCloneLoupeFacet.sol";
+import {AccessControlModifiers, AccessControlLib} from "./AccessControl/AccessControlModifiers.sol";
 import {BaseNFTLib} from "./BaseNFTLib.sol";
 import {SaleStateModifiers} from "./BaseNFTModifiers.sol";
 import {URIStorageLib} from "./URIStorage/URIStorageLib.sol";
+import {PaymentSplitterFacet} from "./PaymentSplitter/PaymentSplitterFacet.sol";
+import {RoyaltyStandardFacet} from "./RoyaltyStandard/RoyaltyStandardFacet.sol";
 
 // Inherit from other facets in the BaseNFTFacet
 // Why inherit to one facet instead of deploying Each Facet Separately?
 // Because its cheaper for end customers to just store / cut one facet address
 
-contract BaseNFTFacet is SaleStateModifiers, AccessControlModifiers, AccessControlFacet, DiamondCloneCutFacet, DiamondCloneLoupeFacet, ERC721AFacet {
+contract BaseNFTFacet is SaleStateModifiers, AccessControlModifiers, AccessControlFacet, ERC721AFacet, PaymentSplitterFacet, RoyaltyStandardFacet {
     using Strings for uint256;
 
     function init() external {
