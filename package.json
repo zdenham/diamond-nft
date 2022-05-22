@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/mudgen/contracts-starter.git"
   },
-  "author": "Nick Mudge",
+  "author": "Zac Denham",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/mudgen/contracts-starter/issues"
