@@ -1,4 +1,6 @@
-# 💎 🪚 Diamond Saw + ERC721A Facet Example
+# 💎 🪚 Diamond Saw
+
+If you are not yet familiar with EIP-2535, the [diamond standard](https://eips.ethereum.org/EIPS/eip-2535), you should check it out! Diamond saw is a variation of the diamond pattern. TLDR is Diamonds are proxy contracts that can point to **multiple** other smart contract implementations.
 
 This is a minimal proof of concept for Diamond SAW!
 
@@ -12,15 +14,15 @@ The diamond now only needs to store a map of addresses to its faucet implementat
 
 I'm working on https://juicelabs.io
 
-The goal is to help a lot of NFT creators deploy custom contracts for their NFT projects. I want to reduce the deployment cost for my customers, but maintain extensibility so we can have a lot of cool extensions on top of the base ERC721A / 1155 contracts.
+The goal is to help a lot of token creators deploy custom contracts for their projects. I want to reduce the deployment cost for contract creators, but maintain extensibility so we can have a lot of cool extensions on top of the base ERC721A / 1155 / 20 contracts.
 
 Minimal proxy patterns weren't my jam because they only allow you to point to one contract, not as extensible as I would like!
 
-When I found diamond standard I was super excited! But deployment of diamond-3 out of the box was >2M gas (Plus cutting!).
+When I found diamond standard I was super excited! But deployment of diamond-3 out of the box was >2M gas (Plus cutting! another >600k gas depending on # selectors).
 
-My use case requires really cheap deployments for NFT creators, and for this I'm willing to sacrifice gas overhead calling to a third party contract for selector mappings on each transaction (see gas cache idea below too).
+My use case requires really cheap deployments for contract creators, and for this I'm willing to sacrifice gas overhead calling to a third party contract for selector mappings on each transaction (see gas cache idea below too).
 
-In this example, we deploy an ERC721A single cut Diamond for <400,000 gas, which is pretty cool (and affordable)!
+In this example, we deploy an ERC721A single cut Diamond for <600,000 gas, which is pretty cool (and affordable)!
 
 ## Files to look at
 
@@ -39,7 +41,7 @@ In this example, we deploy an ERC721A single cut Diamond for <400,000 gas, which
 - [x] Diamond cut event
 - [x] Make ERC721AFaucet Initializable
 - [x] Whatever else is left to fully comply to the diamond standard
-- [ ] Add a "gas cache" where we store SOME selector mappings locally on the diamond (for highly trafficked write calls)
-- [ ] Add an optional facet array gas cache to make loupe operations cheaper
-- [ ] Add an "upgrade saw" function which re-cuts the diamond w/ a new saw and facets
+- [x] Add a "gas cache" where we store SOME selector mappings locally on the diamond (for highly trafficked write calls)
+- [x] Add an optional facet array gas cache to make loupe operations cheaper
+- [x] Add an "upgrade saw" function which re-cuts the diamond w/ a new saw and facets
 - [ ] More tests
